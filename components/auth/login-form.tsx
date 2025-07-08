@@ -111,9 +111,6 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">Demo credentials: admin / password123</p>
-      </CardFooter>
     </Card>
   )
 }

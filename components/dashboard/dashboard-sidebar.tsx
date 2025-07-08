@@ -28,13 +28,20 @@ export function DashboardSidebar() {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
 
-  const { logout } = useAuth();
+  const auth = useAuth() as any;
+  const user = auth?.user;
+  const logout = auth?.logout;
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout();
-    router.push("/");
+    if (logout) {
+      await logout();
+      router.push("/");
+    }
   };
+
+  // Role-based menu items
+  const canViewReports = user && ["superAdmin", "accountant", "manager"].includes(user.role);
 
   return (
     <Sidebar variant="inset">
@@ -58,7 +65,7 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/products")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/products")}> 
                   <Link href="/dashboard/products">
                     <Package />
                     <span>Products</span>
@@ -66,7 +73,7 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/inventory")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/inventory")}> 
                   <Link href="/dashboard/inventory">
                     <Box />
                     <span>Inventory</span>
@@ -74,7 +81,7 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/sales")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/sales")}> 
                   <Link href="/dashboard/sales">
                     <ShoppingCart />
                     <span>Sales (POS)</span>
@@ -82,7 +89,7 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/purchases")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/purchases")}> 
                   <Link href="/dashboard/purchases">
                     <Truck />
                     <span>Purchases</span>
@@ -90,23 +97,25 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/expenses")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/expenses")}> 
                   <Link href="/dashboard/expenses">
                     <DollarSign />
                     <span>Expenses</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {canViewReports && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive("/dashboard/reports")}> 
+                    <Link href="/dashboard/reports">
+                      <BarChart3 />
+                      <span>Reports</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/reports")}>
-                  <Link href="/dashboard/reports">
-                    <BarChart3 />
-                    <span>Reports</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/stocktake")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/stocktake")}> 
                   <Link href="/dashboard/stocktake">
                     <ClipboardList />
                     <span>Stocktake</span>
@@ -121,17 +130,17 @@ export function DashboardSidebar() {
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-3">
             <Avatar>
-              <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarImage src={user?.picture || "/placeholder.svg?height=32&width=32"} alt="User" />
+              <AvatarFallback>{user ? (user.firstName?.[0] || "") + (user.lastName?.[0] || "") : "?"}</AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-muted-foreground">Manager</p>
+              <p className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : "Guest"}</p>
+              <p className="text-xs text-muted-foreground">{user ? user.role : "Role"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
-            <Button variant="ghost" size="icon" title="Logout" onClick={handleLogout}>
+            <Button variant="ghost" size="icon" title="Logout" onClick={handleLogout} disabled={!logout}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
