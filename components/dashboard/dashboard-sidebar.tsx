@@ -18,6 +18,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -25,6 +27,14 @@ export function DashboardSidebar() {
   const isActive = (path: string) => {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
+
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
+  };
 
   return (
     <Sidebar variant="inset">
@@ -121,7 +131,7 @@ export function DashboardSidebar() {
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
-            <Button variant="ghost" size="icon" title="Logout">
+            <Button variant="ghost" size="icon" title="Logout" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

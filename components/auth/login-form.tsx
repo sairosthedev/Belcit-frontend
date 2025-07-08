@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   username: z.string().min(1, {
@@ -25,6 +26,7 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { authError } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,7 +53,7 @@ export function LoginForm() {
       }
       const data = await res.json()
       localStorage.setItem("token", data.token)
-      router.push("/dashboard")
+      window.location.href = "/dashboard"
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -95,6 +97,7 @@ export function LoginForm() {
               )}
             />
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {authError && <div className="text-red-500 text-sm">{authError}</div>}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
