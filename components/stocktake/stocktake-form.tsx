@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Save, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,49 +8,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
-type StocktakeItem = {
-  id: number
-  name: string
-  sku: string
-  expectedStock: number
-  actualStock: number
-  discrepancy: number
-  notes: string
-}
+import { apiFetch } from "@/lib/api"
 
 export function StocktakeForm() {
-  const [stocktakeItems, setStocktakeItems] = useState<StocktakeItem[]>([
-    {
-      id: 1,
-      name: "Fresh Milk 1L",
-      sku: "DRY-1001",
-      expectedStock: 45,
-      actualStock: 42,
-      discrepancy: -3,
-      notes: "",
-    },
-    {
-      id: 2,
-      name: "Whole Wheat Bread",
-      sku: "BKY-2034",
-      expectedStock: 28,
-      actualStock: 30,
-      discrepancy: 2,
-      notes: "",
-    },
-    {
-      id: 3,
-      name: "Organic Eggs (12pk)",
-      sku: "DRY-1087",
-      expectedStock: 12,
-      actualStock: 10,
-      discrepancy: -2,
-      notes: "2 packages damaged",
-    },
-  ])
+  const [stocktakeItems, setStocktakeItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const { toast } = require("@/hooks/use-toast").useToast();
 
-  const updateActualStock = (id: number, actualStock: number) => {
+  // Fetch products from backend
+  useEffect(() => {
+    setLoading(true)
+    apiFetch("/api/products")
+      .then(data => setStocktakeItems(data.map((p: any) => ({
+        id: p._id || p.id,
+        name: p.name,
+        sku: p.barcode,
+        expectedStock: p.stock,
+        actualStock: p.stock,
+        discrepancy: 0,
+        notes: "",
+      }))))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const updateActualStock = (id: string, actualStock: number) => {
     setStocktakeItems(
       stocktakeItems.map((item) =>
         item.id === id
@@ -64,11 +48,36 @@ export function StocktakeForm() {
     )
   }
 
-  const updateNotes = (id: number, notes: string) => {
+  const updateNotes = (id: string, notes: string) => {
     setStocktakeItems(stocktakeItems.map((item) => (item.id === id ? { ...item, notes } : item)))
   }
 
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    try {
+      for (const item of stocktakeItems) {
+        await apiFetch("/api/stocktakes", {
+          method: "POST",
+          body: JSON.stringify({
+            productId: item.id,
+            counted: item.actualStock,
+            countedBy: null, // TODO: set current user ID
+            reason: item.discrepancy !== 0 ? item.notes : undefined,
+          }),
+        })
+      }
+      toast({ title: "Stocktake submitted!" })
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const totalDiscrepancies = stocktakeItems.filter((item) => item.discrepancy !== 0).length
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading products...</div>
+  if (error) return <div className="p-8 text-center text-destructive">{error}</div>
 
   return (
     <div className="space-y-6">
@@ -164,10 +173,10 @@ export function StocktakeForm() {
             </TableBody>
           </Table>
           <div className="mt-6 flex justify-end space-x-2">
-            <Button variant="outline">Save Draft</Button>
-            <Button>
+            <Button variant="outline" disabled={submitting}>Save Draft</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
               <Save className="mr-2 h-4 w-4" />
-              Complete Stocktake
+              {submitting ? "Submitting..." : "Complete Stocktake"}
             </Button>
           </div>
         </CardContent>

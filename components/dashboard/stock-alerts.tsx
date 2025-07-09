@@ -1,8 +1,26 @@
+import { useEffect, useState } from "react"
 import { AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { apiFetch } from "@/lib/api"
 
 export function StockAlerts() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lowStockItems, setLowStockItems] = useState<any[]>([])
+
+  useEffect(() => {
+    setLoading(true)
+    setError(null)
+    apiFetch("/api/products")
+      .then(products => {
+        // Filter for low stock: stock <= minStock or stock <= 5
+        setLowStockItems(products.filter((item: any) => item.stock <= (item.minStock ?? 5)))
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center">
@@ -13,53 +31,30 @@ export function StockAlerts() {
         <AlertTriangle className="h-5 w-5 text-amber-500" />
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {lowStockItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {item.category} • SKU: {item.sku}
-                </p>
+        {loading ? (
+          <div className="text-muted-foreground animate-pulse">Loading...</div>
+        ) : error ? (
+          <div className="text-destructive">{error}</div>
+        ) : lowStockItems.length === 0 ? (
+          <div className="text-muted-foreground">No low stock items.</div>
+        ) : (
+          <div className="space-y-4">
+            {lowStockItems.map((item) => (
+              <div key={item._id || item.id} className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.category} • SKU: {item.barcode}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={item.stock <= 5 ? "destructive" : "outline"}>{item.stock} left</Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={item.quantity <= 5 ? "destructive" : "outline"}>{item.quantity} left</Badge>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
-
-const lowStockItems = [
-  {
-    id: 1,
-    name: "Fresh Milk 1L",
-    category: "Dairy",
-    sku: "DRY-1001",
-    quantity: 3,
-  },
-  {
-    id: 2,
-    name: "Whole Wheat Bread",
-    category: "Bakery",
-    sku: "BKY-2034",
-    quantity: 5,
-  },
-  {
-    id: 3,
-    name: "Organic Eggs (12pk)",
-    category: "Dairy",
-    sku: "DRY-1087",
-    quantity: 2,
-  },
-  {
-    id: 4,
-    name: "Premium Coffee Beans",
-    category: "Beverages",
-    sku: "BEV-3045",
-    quantity: 8,
-  },
-]

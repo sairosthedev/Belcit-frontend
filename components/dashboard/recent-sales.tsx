@@ -1,73 +1,75 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { apiFetch } from "@/lib/api"
 
 export function RecentSales() {
+  const [sales, setSales] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchSales() {
+      try {
+        const data = await apiFetch("/api/sales?limit=5")
+        setSales(data)
+      } catch (err: any) {
+        setError("Could not load recent sales.")
+        setSales([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSales()
+  }, [])
+
   return (
     <Card className="col-span-1">
       <CardHeader>
         <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>You made 265 sales today</CardDescription>
+        <CardDescription>
+          {loading ? "Loading..." : error ? error : `You made ${sales.length} sales recently`}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {recentSales.map((sale) => (
-            <div key={sale.id} className="flex items-center">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={sale.avatar || "/placeholder.svg"} alt={sale.name} />
-                <AvatarFallback>{sale.initials}</AvatarFallback>
-              </Avatar>
-              <div className="ml-4 space-y-1">
-                <p className="text-sm font-medium leading-none">{sale.name}</p>
-                <p className="text-sm text-muted-foreground">{sale.email}</p>
-              </div>
-              <div className="ml-auto font-medium">+${sale.amount}</div>
-            </div>
-          ))}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead>Cashier</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead>Receipt</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(loading ? [] : sales).map((sale) => (
+                <TableRow key={sale._id}>
+                  <TableCell>{new Date(sale.date || sale.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>${sale.total?.toFixed(2) || sale.amount || "0.00"}</TableCell>
+                  <TableCell>{sale.paymentType}</TableCell>
+                  <TableCell>
+                    {sale.cashier?.first_name
+                      ? `${sale.cashier.first_name} ${sale.cashier.last_name || ""}`
+                      : sale.cashier?.name || "—"}
+                  </TableCell>
+                  <TableCell>
+                    {sale.items?.map((item: any) =>
+                      `${item.product?.name || item.productName || "?"} x${item.quantity}`
+                    ).join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="outline" onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/sales/${sale._id}/receipt`, "_blank")}>Print</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>
   )
 }
-
-const recentSales = [
-  {
-    id: 1,
-    name: "Olivia Martin",
-    email: "olivia.martin@email.com",
-    amount: "1,999.00",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "OM",
-  },
-  {
-    id: 2,
-    name: "Jackson Lee",
-    email: "jackson.lee@email.com",
-    amount: "39.00",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "JL",
-  },
-  {
-    id: 3,
-    name: "Isabella Nguyen",
-    email: "isabella.nguyen@email.com",
-    amount: "299.00",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "IN",
-  },
-  {
-    id: 4,
-    name: "William Kim",
-    email: "will@email.com",
-    amount: "99.00",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "WK",
-  },
-  {
-    id: 5,
-    name: "Sofia Davis",
-    email: "sofia.davis@email.com",
-    amount: "39.00",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "SD",
-  },
-]

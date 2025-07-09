@@ -35,13 +35,25 @@ export function DashboardSidebar() {
 
   const handleLogout = async () => {
     if (logout) {
-      await logout();
-      router.push("/");
+    await logout();
+    router.push("/");
     }
   };
 
   // Role-based menu items
-  const canViewReports = user && ["superAdmin", "accountant", "manager"].includes(user.role);
+  const isSuperAdmin = user && user.role === "superAdmin";
+  const isAdmin = user && user.role === "admin";
+  const isManager = user && user.role === "manager";
+  const isStockClerk = user && user.role === "stockClerk";
+  const isCashier = user && user.role === "cashier";
+
+  // Dashboard: all roles
+  // Products: manager, stockClerk, admin, superAdmin
+  // Inventory: manager, stockClerk, admin, superAdmin
+  // Sales: cashier, manager, admin, superAdmin
+  // Purchases/Expenses: manager, admin, superAdmin
+  // Reports: manager, admin, superAdmin
+  // Stocktake: stockClerk, manager, admin, superAdmin
 
   return (
     <Sidebar variant="inset">
@@ -64,64 +76,76 @@ export function DashboardSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {(isManager || isStockClerk || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/products")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/products")}>
                   <Link href="/dashboard/products">
                     <Package />
                     <span>Products</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
+              {(isManager || isStockClerk || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/inventory")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/inventory")}>
                   <Link href="/dashboard/inventory">
                     <Box />
                     <span>Inventory</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
+              {(isCashier || isManager || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/sales")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/sales")}>
                   <Link href="/dashboard/sales">
                     <ShoppingCart />
                     <span>Sales (POS)</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
+              {(isManager || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/purchases")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/purchases")}>
                   <Link href="/dashboard/purchases">
                     <Truck />
                     <span>Purchases</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
+              {(isManager || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/expenses")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/expenses")}>
                   <Link href="/dashboard/expenses">
                     <DollarSign />
                     <span>Expenses</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {canViewReports && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive("/dashboard/reports")}> 
-                    <Link href="/dashboard/reports">
-                      <BarChart3 />
-                      <span>Reports</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
               )}
+              {(isManager || isAdmin || isSuperAdmin) && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/stocktake")}> 
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/reports")}>
+                  <Link href="/dashboard/reports">
+                    <BarChart3 />
+                    <span>Reports</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              )}
+              {(isStockClerk || isManager || isAdmin || isSuperAdmin) && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/stocktake")}>
                   <Link href="/dashboard/stocktake">
                     <ClipboardList />
                     <span>Stocktake</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

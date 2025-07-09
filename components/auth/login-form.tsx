@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/hooks/use-auth"
+import { apiFetch } from "@/lib/api"
 
 const formSchema = z.object({
   username: z.string().min(1, {
@@ -36,22 +37,14 @@ export function LoginForm() {
     },
   })
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const data = await apiFetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.message || "Login failed")
-      }
-      const data = await res.json()
       localStorage.setItem("token", data.token)
       window.location.href = "/dashboard"
     } catch (err: any) {

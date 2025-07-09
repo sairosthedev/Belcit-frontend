@@ -7,6 +7,7 @@ function getToken() {
   return null;
 }
 
+// IMPORTANT: Always use the /api/ prefix in your path, e.g. apiFetch("/api/products")
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
   const headers: Record<string, string> = {
