@@ -28,6 +28,7 @@ export function POSSystem() {
   const [change, setChange] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const { user } = useAuth() as any;
 
   const updateQuantity = (id: number, newQuantity: number) => {
@@ -111,6 +112,7 @@ export function POSSystem() {
         }),
       });
       if (!sale._id) throw new Error("Sale creation failed");
+      setLastSaleId(sale._id); // Store last sale ID
       // 2. Create the payment
       const payment = await apiFetch("/api/payments/", {
         method: "POST",
@@ -132,6 +134,32 @@ export function POSSystem() {
       setSearchError(err.message || "Failed to complete sale");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  // Print receipt for the last sale
+  const printReceipt = async (saleId: string) => {
+    try {
+      // Fetch the receipt HTML with authentication
+      const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Accept': 'text/html',
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const html = await res.text();
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    } catch (err) {
+      alert('Failed to print receipt.');
     }
   };
 
@@ -271,6 +299,16 @@ export function POSSystem() {
               {submitting ? "Processing..." : "Complete Sale"}
             </Button>
             {/* Print Receipt button can be implemented here if needed */}
+            {successMsg && lastSaleId && (
+              <Button
+                variant="outline"
+                className="w-full bg-transparent mt-2"
+                onClick={() => printReceipt(lastSaleId)}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Print Receipt
+              </Button>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">

@@ -61,7 +61,7 @@ export function TopSellingProducts() {
         ) : (
           <div className="space-y-4">
             {topProducts.map((product) => (
-              <div key={product.id} className="space-y-2">
+              <div key={product.productId || product.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{product.name}</p>
                   <span className="text-sm font-medium">{product.sold} sold</span>

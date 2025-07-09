@@ -26,6 +26,30 @@ export default function SalesHistoryPage() {
     if (user) fetchSales();
   }, [user]);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  // Print receipt with authentication
+  const printReceipt = async (saleId: string) => {
+    const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Accept': 'text/html',
+      },
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      alert('Failed to print receipt.');
+      return;
+    }
+    const html = await res.text();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
+
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -55,9 +79,9 @@ export default function SalesHistoryPage() {
                   <TableCell>${sale.total?.toFixed(2) || sale.amount || "0.00"}</TableCell>
                   <TableCell>{sale.paymentType}</TableCell>
                   <TableCell>{sale.cashier?.first_name ? `${sale.cashier.first_name} ${sale.cashier.last_name || ""}` : sale.cashier?.name || "—"}</TableCell>
-                  <TableCell>{sale.items?.map(item => `${item.product?.name || item.productName || "?"} x${item.quantity}`).join(", ")}</TableCell>
+                  <TableCell>{sale.items?.map((item: any) => `${item.product?.name || item.productName || "?"} x${item.quantity}`).join(", ")}</TableCell>
                   <TableCell>
-                    <Button size="sm" variant="outline" onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/sales/${sale._id || sale.id}/receipt`, "_blank")}>Print</Button>
+                    <Button size="sm" variant="outline" onClick={() => printReceipt(sale._id || sale.id)}>Print</Button>
                   </TableCell>
                 </TableRow>
               ))}
