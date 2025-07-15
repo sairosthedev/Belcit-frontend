@@ -9,23 +9,31 @@ export function RecentSales() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [printError, setPrintError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(5);
+  const [total, setTotal] = useState(0);
 
-  // Move fetchSales outside useEffect so it can be called from printReceipt
-  const fetchSales = async () => {
+  // Fetch paginated sales
+  const fetchSales = async (pageNum = page) => {
+    setLoading(true);
     try {
-      const data = await apiFetch("/api/sales?limit=5")
-      setSales(data)
+      const res = await apiFetch(`/api/sales?page=${pageNum}&limit=${limit}`);
+      setSales(res.sales || []);
+      setTotal(res.total || 0);
+      setError(null);
     } catch (err: any) {
-      setError("Could not load recent sales.")
-      setSales([])
+      setError("Could not load recent sales.");
+      setSales([]);
+      setTotal(0);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSales();
-  }, []);
+    fetchSales(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
   // Print receipt with authentication
@@ -56,20 +64,21 @@ export function RecentSales() {
         printWindow.print();
       }
       // Refresh sales list after printing
-      fetchSales();
+      fetchSales(page);
     } catch (err) {
       setPrintError('Failed to print receipt.');
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <Card className="col-span-1">
       <CardHeader>
         <CardTitle>Recent Sales</CardTitle>
         <CardDescription>
-          {loading ? "Loading..." : error ? error : `You made ${sales.length} sales recently`}
+          {loading ? "Loading..." : error ? error : `You made ${total} sales recently`}
         </CardDescription>
-        {/* Refresh button removed as requested */}
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -108,6 +117,11 @@ export function RecentSales() {
               ))}
             </TableBody>
           </Table>
+          <div className="flex justify-between items-center mt-4">
+            <Button variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
+            <span>Page {page} of {totalPages}</span>
+            <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+          </div>
         </div>
       </CardContent>
     </Card>

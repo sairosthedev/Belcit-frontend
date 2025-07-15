@@ -11,22 +11,31 @@ export function DashboardCards() {
   const [productCount, setProductCount] = useState(0)
   const [customerCount, setCustomerCount] = useState(0)
 
+  // Poll every 10 seconds for real-time updates
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    Promise.all([
-      apiFetch("/api/sales"),
-      apiFetch("/api/products"),
-      apiFetch("/api/customers")
-    ])
-      .then(([sales, products, customers]) => {
-        setRevenue(sales.reduce((sum: number, s: any) => sum + (s.total || 0), 0))
-        setSalesCount(sales.length)
-        setProductCount(products.length)
-        setCustomerCount(customers.length)
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
+    let isMounted = true;
+    const fetchData = () => {
+      setLoading(true)
+      setError(null)
+      Promise.all([
+        apiFetch("/api/sales"),
+        apiFetch("/api/products"),
+        apiFetch("/api/customers")
+      ])
+        .then(([salesRes, products, customers]) => {
+          if (!isMounted) return;
+          const salesArr = Array.isArray(salesRes) ? salesRes : (salesRes.sales || []);
+          setRevenue(salesArr.reduce((sum, s) => sum + (s.total || 0), 0))
+          setSalesCount(salesArr.length)
+          setProductCount(products.length)
+          setCustomerCount(customers.length)
+        })
+        .catch(err => { if (isMounted) setError(err.message) })
+        .finally(() => { if (isMounted) setLoading(false) })
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => { isMounted = false; clearInterval(interval); };
   }, [])
 
   if (error) {

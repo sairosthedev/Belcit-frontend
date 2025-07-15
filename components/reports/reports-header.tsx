@@ -2,7 +2,7 @@ import { Download, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export function ReportsHeader() {
+export function ReportsHeader({ period, onPeriodChange }: { period: string, onPeriodChange: (p: string) => void }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -10,7 +10,7 @@ export function ReportsHeader() {
         <p className="text-muted-foreground">Analyze your business performance and trends.</p>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Select defaultValue="7days">
+        <Select value={period} onValueChange={onPeriodChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select period" />
           </SelectTrigger>

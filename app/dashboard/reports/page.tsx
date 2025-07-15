@@ -1,9 +1,12 @@
+"use client"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { ReportsHeader } from "@/components/reports/reports-header"
 import { ReportsCharts } from "@/components/reports/reports-charts"
+import { useState } from "react"
 
 export default function ReportsPage() {
+  const [period, setPeriod] = useState("7days")
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -12,8 +15,8 @@ export default function ReportsPage() {
         <h1 className="text-lg font-semibold">Reports</h1>
       </header>
       <div className="flex flex-col gap-6 p-6">
-        <ReportsHeader />
-        <ReportsCharts />
+        <ReportsHeader period={period} onPeriodChange={setPeriod} />
+        <ReportsCharts period={period} />
       </div>
     </>
   )
