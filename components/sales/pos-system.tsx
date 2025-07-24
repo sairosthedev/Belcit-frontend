@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Minus, Plus, ShoppingCart, Trash2, CreditCard, Printer, Barcode, Tag, Boxes, DollarSign, Hash, Calculator } from "lucide-react"
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,6 @@ type CartItem = {
 
 export function POSSystem() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]); // Start with empty cart
-  const [scanModalOpen, setScanModalOpen] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountReceived, setAmountReceived] = useState(0);
@@ -36,6 +35,8 @@ export function POSSystem() {
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const { user } = useAuth() as any;
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [ecocashNumber, setEcocashNumber] = useState("");
 
   // Fetch customers (first 100)
   const { data: customerData, isLoading: customersLoading } = useQuery({
@@ -102,11 +103,16 @@ export function POSSystem() {
       }
       if (product && product._id) {
         addProductToCart(product);
+        // Refocus the search input after adding
+        if (searchInputRef.current) searchInputRef.current.focus();
       } else {
         setSearchError("Product not found.");
+        // Refocus even on error
+        if (searchInputRef.current) searchInputRef.current.focus();
       }
     } catch (err) {
       setSearchError("Product not found.");
+      if (searchInputRef.current) searchInputRef.current.focus();
     }
   };
 
@@ -125,6 +131,7 @@ export function POSSystem() {
     try {
       if (!user || !user._id) throw new Error("No cashier info");
       if (cartItems.length === 0) throw new Error("Cart is empty");
+      if (paymentMethod === "ecocash" && !ecocashNumber) throw new Error("Ecocash number is required");
       const items = cartItems.map(item => ({
         product: item.id,
         quantity: item.quantity
@@ -148,7 +155,8 @@ export function POSSystem() {
           saleId: sale._id,
           amount: total,
           paymentMethod,
-          paymentType: "sale"
+          paymentType: "sale",
+          ecocashNumber: paymentMethod === "ecocash" ? ecocashNumber : undefined
         }),
       });
       if (!payment || payment.error) {
@@ -158,6 +166,7 @@ export function POSSystem() {
       setCartItems([]);
       setAmountReceived(0);
       setChange(0);
+      setEcocashNumber("");
     } catch (err: any) {
       setSearchError(err.message || "Failed to complete sale");
     } finally {
@@ -204,10 +213,7 @@ export function POSSystem() {
             </div>
           )}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <SalesHeader onSearch={handleSearch} />
-            <Button variant="secondary" className="sm:ml-2" onClick={() => setScanModalOpen(true)}>
-              Scan with Camera
-            </Button>
+            <SalesHeader onSearch={handleSearch} ref={searchInputRef} />
           </div>
         </div>
         {/* Customer select */}
@@ -405,7 +411,7 @@ export function POSSystem() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Payment Method</label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <Select value={paymentMethod} onValueChange={val => { setPaymentMethod(val); if (val !== 'ecocash') setEcocashNumber(""); }}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
@@ -418,6 +424,19 @@ export function POSSystem() {
                   </SelectContent>
                 </Select>
               </div>
+              {paymentMethod === "ecocash" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Ecocash Number</label>
+                  <Input
+                    type="tel"
+                    value={ecocashNumber}
+                    onChange={e => setEcocashNumber(e.target.value)}
+                    className="w-full"
+                    placeholder="Enter Ecocash number"
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount Received</label>
                 <Input
@@ -455,16 +474,6 @@ export function POSSystem() {
           </CardContent>
         </Card>
       </div>
-      {/* Camera scan modal scaffold */}
-      {scanModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Scan Barcode with Camera</h2>
-            <div className="mb-4">[Camera scanner coming soon]</div>
-            <Button onClick={() => setScanModalOpen(false)}>Close</Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

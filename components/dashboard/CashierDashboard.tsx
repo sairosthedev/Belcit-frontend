@@ -158,12 +158,14 @@ const CashierDashboard = ({ user }: { user: User }) => {
     enabled: !!user,
   });
 
+  const salesArray = Array.isArray(data) ? data : data?.sales || [];
+
   const filteredSales = useMemo(() => {
-    if (!data) return [];
-    return data.filter((item: any) =>
+    if (!salesArray) return [];
+    return salesArray.filter((item: any) =>
       (item.customer?.name || '').toLowerCase().includes(debouncedSearch.toLowerCase())
     );
-  }, [data, debouncedSearch]);
+  }, [salesArray, debouncedSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE));
   const paginatedSales = useMemo(() => {
@@ -219,7 +221,7 @@ const CashierDashboard = ({ user }: { user: User }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             title="Today's Sales"
-            value={formatCurrency(data ? data.reduce((sum: number, s: any) => sum + (s.total || 0), 0) : 0)}
+            value={formatCurrency(salesArray ? salesArray.reduce((sum: number, s: any) => sum + (s.total || 0), 0) : 0)}
             description="Total sales today"
             icon={DollarSign}
             iconColor="text-green-500"
@@ -227,7 +229,7 @@ const CashierDashboard = ({ user }: { user: User }) => {
           />
           <StatCard
             title="Transactions"
-            value={data ? data.length : 0}
+            value={salesArray ? salesArray.length : 0}
             description="Number of sales"
             icon={ShoppingCart}
             iconColor="text-blue-500"
