@@ -213,7 +213,9 @@ function CashierDashboard({ user, router }: { user: any, router: any }) {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     apiFetch(`/api/sales?date=${dateStr}&cashierId=${user.id || user._id || ''}`)
-      .then((sales) => {
+      .then((response) => {
+        // Handle both array and object responses
+        const sales = Array.isArray(response) ? response : (response.sales || [])
         setTransactionCount(sales.length);
         setTodaySales(sales.reduce((sum: number, s: any) => sum + (s.total || 0), 0));
         setRecentSales(sales.slice(-5).reverse());
@@ -238,7 +240,9 @@ function CashierDashboard({ user, router }: { user: any, router: any }) {
           <Button variant="outline" onClick={() => router.push("/dashboard/sales/history")}>View Sales History</Button>
           <Button variant="outline" onClick={async () => {
             try {
-              const sales = await apiFetch(`/api/sales?cashierId=${user?.id || user?._id || ""}&limit=1`);
+              const response = await apiFetch(`/api/sales?cashierId=${user?.id || user?._id || ""}&limit=1`);
+              // Handle both array and object responses
+              const sales = Array.isArray(response) ? response : (response.sales || [])
               if (sales && sales.length > 0) {
                 const lastSale = sales[0];
                 window.open(`/dashboard/sales/receipt/${lastSale._id || lastSale.id}`, "_blank");

@@ -17,7 +17,9 @@ export function TopSellingProducts() {
       .then(data => setTopProducts(data))
       .catch(async () => {
         try {
-          const sales = await apiFetch("/api/sales")
+          const response = await apiFetch("/api/sales")
+          // Handle both array and object responses
+          const sales = Array.isArray(response) ? response : (response.sales || [])
           // Compute top products by count
           const productMap: Record<string, { name: string, sold: number }> = {}
           sales.forEach((sale: any) => {

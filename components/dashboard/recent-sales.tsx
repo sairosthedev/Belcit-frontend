@@ -13,7 +13,8 @@ export function RecentSales() {
     async function fetchSales() {
       try {
         const data = await apiFetch("/api/sales?limit=5")
-        setSales(data)
+        // Extract the sales array from the response object
+        setSales(Array.isArray(data) ? data : (data.sales || []))
       } catch (err: any) {
         setError("Could not load recent sales.")
         setSales([])
