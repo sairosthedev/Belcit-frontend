@@ -28,3 +28,4 @@ export function CheckinStatusIndicator({ isCheckedIn }: CheckinStatusIndicatorPr
     </div>
   );
 }
+

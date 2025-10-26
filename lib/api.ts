@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://belcit-backend.onrender.com';
 
 function getToken() {
   if (typeof window !== 'undefined') {
@@ -17,7 +17,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${API_BASE}${path}`, {
+  
+  const fullUrl = `${API_BASE}${path}`;
+  console.log('API Fetch:', fullUrl, 'Headers:', headers);
+  
+  const res = await fetch(fullUrl, {
     ...options,
     headers,
   });
