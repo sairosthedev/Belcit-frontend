@@ -11,22 +11,31 @@ export function DashboardCards() {
   const [productCount, setProductCount] = useState(0)
   const [customerCount, setCustomerCount] = useState(0)
 
+  // Poll every 10 seconds for real-time updates
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    Promise.all([
-      apiFetch("/api/sales"),
-      apiFetch("/api/products"),
-      apiFetch("/api/customers")
-    ])
-      .then(([sales, products, customers]) => {
-        setRevenue(sales.reduce((sum: number, s: any) => sum + (s.total || 0), 0))
-        setSalesCount(sales.length)
-        setProductCount(products.length)
-        setCustomerCount(customers.length)
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
+    let isMounted = true;
+    const fetchData = () => {
+      setLoading(true)
+      setError(null)
+      Promise.all([
+        apiFetch("/api/sales"),
+        apiFetch("/api/products"),
+        apiFetch("/api/customers")
+      ])
+        .then(([salesRes, products, customers]) => {
+          if (!isMounted) return;
+          const salesArr = Array.isArray(salesRes) ? salesRes : (salesRes.sales || []);
+          setRevenue(salesArr.reduce((sum, s) => sum + (s.total || 0), 0))
+          setSalesCount(salesArr.length)
+          setProductCount(products.length)
+          setCustomerCount(customers.length)
+        })
+        .catch(err => { if (isMounted) setError(err.message) })
+        .finally(() => { if (isMounted) setLoading(false) })
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => { isMounted = false; clearInterval(interval); };
   }, [])
 
   if (error) {
@@ -41,7 +50,7 @@ export function DashboardCards() {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : `$${revenue.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`}</div>
+          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : (typeof revenue === 'number' ? `$${revenue.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}` : '$0.00')}</div>
           <p className="text-xs text-muted-foreground">
             <span className="flex items-center text-green-500">
               <ArrowUpIcon className="mr-1 h-4 w-4" />
@@ -57,7 +66,7 @@ export function DashboardCards() {
           <ShoppingCart className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : `+${salesCount.toLocaleString()}`}</div>
+          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : (typeof salesCount === 'number' ? `+${salesCount.toLocaleString()}` : '+0')}</div>
           <p className="text-xs text-muted-foreground">
             <span className="flex items-center text-green-500">
               <ArrowUpIcon className="mr-1 h-4 w-4" />
@@ -73,7 +82,7 @@ export function DashboardCards() {
           <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : productCount.toLocaleString()}</div>
+          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : (typeof productCount === 'number' ? productCount.toLocaleString() : '0')}</div>
           <p className="text-xs text-muted-foreground">
             <span className="flex items-center text-green-500">
               <ArrowUpIcon className="mr-1 h-4 w-4" />
@@ -89,7 +98,7 @@ export function DashboardCards() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : `+${customerCount.toLocaleString()}`}</div>
+          <div className="text-2xl font-bold">{loading ? <span className="animate-pulse">...</span> : (typeof customerCount === 'number' ? `+${customerCount.toLocaleString()}` : '+0')}</div>
           <p className="text-xs text-muted-foreground">
             <span className="flex items-center text-red-500">
               <ArrowDownIcon className="mr-1 h-4 w-4" />

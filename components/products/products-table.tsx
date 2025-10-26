@@ -16,6 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { apiFetch } from "@/lib/api"
+import { AddProductModal } from "./add-product-modal"
 
 export function ProductsTable({ refreshKey, search }: { refreshKey?: number, search?: string }) {
   const [products, setProducts] = useState<any[]>([])
@@ -26,6 +27,8 @@ export function ProductsTable({ refreshKey, search }: { refreshKey?: number, sea
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<any | null>(null);
 
   // Fetch products and categories
   const fetchData = () => {
@@ -190,7 +193,7 @@ export function ProductsTable({ refreshKey, search }: { refreshKey?: number, sea
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setEditProduct(product); setEditModalOpen(true); }}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -220,6 +223,13 @@ export function ProductsTable({ refreshKey, search }: { refreshKey?: number, sea
             </Button>
           </div>
         </div>
+        <AddProductModal
+          open={editModalOpen}
+          onOpenChange={(open) => { setEditModalOpen(open); if (!open) setEditProduct(null); }}
+          initialData={editProduct}
+          mode="edit"
+          onSuccess={fetchData}
+        />
       </CardContent>
     </Card>
   )
