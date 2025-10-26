@@ -15,47 +15,21 @@ export function AuthProvider({ children }) {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        console.log('Checking authentication...');
-        const userData = await apiFetch('/api/auth/me');
-        console.log('Auth successful:', userData);
+    apiFetch('/api/auth/me')
+      .then(async (userData) => {
         setUser(userData);
-        // Check if user is already checked in today (don't block auth if this fails)
-        try {
-          await checkCurrentCheckinStatus(userData);
-        } catch (checkinError) {
-          console.error('Check-in status check failed:', checkinError);
-          // Don't fail auth if check-in status check fails
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
+        // Check if user is already checked in today
+        await checkCurrentCheckinStatus(userData);
+      })
+      .catch((err) => {
         setUser(null);
         if (err.message && err.message.toLowerCase().includes('unauthorized')) {
           setAuthError('Session expired or not authorized. Please log in again.');
-        } else if (err.message && err.message.toLowerCase().includes('timeout')) {
-          setAuthError('Server connection timeout. Please check your internet connection.');
         } else {
           setAuthError(null);
         }
-      } finally {
-        console.log('Auth check completed, setting loading to false');
-        setLoading(false);
-      }
-    };
-
-    // Add a fallback timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.log('Auth check timeout - forcing loading to false');
-        setLoading(false);
-        setAuthError('Connection timeout. Please refresh the page.');
-      }
-    }, 15000); // 15 second fallback timeout
-
-    checkAuth();
-
-    return () => clearTimeout(timeoutId);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const checkCurrentCheckinStatus = async (userData) => {
