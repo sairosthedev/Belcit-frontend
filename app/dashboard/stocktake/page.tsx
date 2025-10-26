@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { StocktakeHeader } from "@/components/stocktake/stocktake-header"
 import { StocktakeForm } from "@/components/stocktake/stocktake-form"
+import { StocktakeHistory } from "@/components/stocktake/stocktake-history"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -60,55 +61,74 @@ export default function StocktakePage() {
         {tab === "stocktake" ? (
           <StocktakeForm key={resetKey} />
         ) : (
-          <div className="rounded border p-8">
-            <h2 className="text-xl font-bold mb-4">Unresolved Discrepancies</h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Unresolved Discrepancies</h2>
+                <p className="text-muted-foreground">Review and confirm stock adjustments</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-amber-600">
+                  {discrepancies.length} pending
+                </Badge>
+              </div>
+            </div>
+
             {loading ? (
-              <div className="text-muted-foreground">Loading discrepancies...</div>
+              <div className="text-center py-8 text-muted-foreground">Loading discrepancies...</div>
             ) : error ? (
-              <div className="text-destructive">{error}</div>
+              <div className="text-center py-8 text-destructive">{error}</div>
             ) : discrepancies.length === 0 ? (
-              <div className="text-muted-foreground">No unresolved discrepancies.</div>
+              <div className="text-center py-8">
+                <div className="text-muted-foreground mb-2">No unresolved discrepancies</div>
+                <p className="text-sm text-muted-foreground">All stock levels are accurate</p>
+              </div>
             ) : (
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-2 py-1 text-left font-medium">Product</th>
-                    <th className="px-2 py-1 text-left font-medium">System</th>
-                    <th className="px-2 py-1 text-left font-medium">Counted</th>
-                    <th className="px-2 py-1 text-left font-medium">Discrepancy</th>
-                    <th className="px-2 py-1 text-left font-medium">Notes</th>
-                    <th className="px-2 py-1 text-left font-medium">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {discrepancies.map(d => (
-                    <tr key={d._id} className="border-b">
-                      <td className="px-2 py-1">{d.product?.name}</td>
-                      <td className="px-2 py-1">{d.system}</td>
-                      <td className="px-2 py-1">{d.counted}</td>
-                      <td className="px-2 py-1">
-                        <Badge variant={d.discrepancy > 0 ? "outline" : "destructive"}>{d.discrepancy > 0 ? "+" : ""}{d.discrepancy}</Badge>
-                      </td>
-                      <td className="px-2 py-1">{d.reason || d.notes || "-"}</td>
-                      <td className="px-2 py-1">
-                        <Button size="sm" disabled={!!confirming} onClick={() => handleConfirm(d._id)}>
-                          {confirming === d._id ? "Confirming..." : "Confirm"}
+              <div className="grid gap-4">
+                {discrepancies.map(d => (
+                  <div key={d._id} className="border rounded-lg p-4 bg-card">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{d.product?.name}</h3>
+                          <Badge variant={d.discrepancy > 0 ? "outline" : "destructive"}>
+                            {d.discrepancy > 0 ? "+" : ""}{d.discrepancy}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                          <div>System Stock: <span className="font-medium">{d.system}</span></div>
+                          <div>Counted: <span className="font-medium">{d.counted}</span></div>
+                        </div>
+                        {d.reason && (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Reason: </span>
+                            <span>{d.reason}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          disabled={!!confirming} 
+                          onClick={() => handleConfirm(d._id)}
+                        >
+                          {confirming === d._id ? "Confirming..." : "Confirm Adjustment"}
                         </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
       </div>
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent>
+        <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Stocktake History</DialogTitle>
           </DialogHeader>
-          <div className="text-muted-foreground">History view coming soon...</div>
+          <StocktakeHistory />
         </DialogContent>
       </Dialog>
     </>
