@@ -20,8 +20,12 @@ export default function Home() {
   // Show loading while checking auth status
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Connecting to server...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">This may take a few moments</p>
+        </div>
       </div>
     )
   }

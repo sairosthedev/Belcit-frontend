@@ -21,22 +21,37 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   const fullUrl = `${API_BASE}${path}`;
   console.log('API Fetch:', fullUrl, 'Headers:', headers);
   
-  const res = await fetch(fullUrl, {
-    ...options,
-    headers,
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    let errorData;
-    try {
-      errorData = JSON.parse(errorText);
-    } catch {
-      errorData = { message: errorText };
+  // Add timeout to prevent hanging requests
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  
+  try {
+    const res = await fetch(fullUrl, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      const error = new Error(errorData.message || errorText);
+      // Attach the full error data to the error object
+      Object.assign(error, errorData);
+      throw error;
     }
-    const error = new Error(errorData.message || errorText);
-    // Attach the full error data to the error object
-    Object.assign(error, errorData);
+    return res.json();
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout - server may be unavailable');
+    }
     throw error;
   }
-  return res.json();
 } 
