@@ -16,9 +16,11 @@ export default function SalesHistoryPage() {
     async function fetchSales() {
       try {
         const data = await apiFetch(`/api/sales?cashierId=${user?.id || user?._id || ""}`);
-        setSales(data);
+        // Ensure data is an array
+        setSales(Array.isArray(data) ? data : []);
       } catch (err: any) {
         setError("Could not load sales history.");
+        setSales([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -73,7 +75,7 @@ export default function SalesHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sales.map((sale) => (
+              {sales && Array.isArray(sales) ? sales.map((sale) => (
                 <TableRow key={sale._id || sale.id}>
                   <TableCell>{new Date(sale.date || sale.createdAt).toLocaleString()}</TableCell>
                   <TableCell>${sale.total?.toFixed(2) || sale.amount || "0.00"}</TableCell>
@@ -84,7 +86,7 @@ export default function SalesHistoryPage() {
                     <Button size="sm" variant="outline" onClick={() => printReceipt(sale._id || sale.id)}>Print</Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : null}
             </TableBody>
           </Table>
         )}

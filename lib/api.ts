@@ -21,6 +21,18 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     ...options,
     headers,
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const errorText = await res.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { message: errorText };
+    }
+    const error = new Error(errorData.message || errorText);
+    // Attach the full error data to the error object
+    Object.assign(error, errorData);
+    throw error;
+  }
   return res.json();
 } 

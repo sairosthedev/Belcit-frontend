@@ -27,7 +27,7 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { authError } = useAuth();
+  const { login, authError } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,12 +41,8 @@ export function LoginForm() {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await apiFetch("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify(values),
-      })
-      localStorage.setItem("token", data.token)
-      window.location.href = "/dashboard"
+      await login(values)
+      router.push("/dashboard")
     } catch (err: any) {
       setError(err.message)
     } finally {

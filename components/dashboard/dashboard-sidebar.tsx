@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Box, ClipboardList, DollarSign, Home, Package, ShoppingCart, Truck, LogOut } from "lucide-react"
+import { BarChart3, Box, ClipboardList, Clock, DollarSign, Home, Package, ShoppingCart, Truck, LogOut } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import { CheckinStatusIndicator } from "@/components/attendance/checkin-status-indicator";
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -31,12 +32,13 @@ export function DashboardSidebar() {
   const auth = useAuth() as any;
   const user = auth?.user;
   const logout = auth?.logout;
+  const isCheckedIn = auth?.isCheckedIn;
   const router = useRouter();
 
   const handleLogout = async () => {
     if (logout) {
-    await logout();
-    router.push("/");
+      await logout();
+      // Router push will be handled by the auth context
     }
   };
 
@@ -146,6 +148,16 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               )}
+              {(isCashier || isManager || isStockClerk || isAdmin || isSuperAdmin) && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/attendance")}>
+                  <Link href="/dashboard/attendance">
+                    <Clock />
+                    <span>Attendance</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -160,6 +172,9 @@ export function DashboardSidebar() {
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : "Guest"}</p>
               <p className="text-xs text-muted-foreground">{user ? user.role : "Role"}</p>
+              <div className="mt-1">
+                <CheckinStatusIndicator isCheckedIn={isCheckedIn} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

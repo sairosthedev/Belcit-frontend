@@ -1,8 +1,35 @@
+"use client";
+
 import Image from "next/image"
 import { LoginForm } from "@/components/auth/login-form"
 import { ShoppingCart, Package, Users, BarChart3 } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Home() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard")
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  // Redirect if already authenticated
+  if (user) {
+    return null
+  }
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       {/* Background Pattern */}
