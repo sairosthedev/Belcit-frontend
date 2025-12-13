@@ -15,26 +15,20 @@ export function AuthProvider({ children }) {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    let maxTimeout: NodeJS.Timeout;
-    
-    // Set a maximum timeout to prevent infinite loading (reduced to 15 seconds for faster feedback)
-    maxTimeout = setTimeout(() => {
-      if (isMounted) {
-        console.warn('Auth check timed out after 15 seconds');
+    // Set a maximum timeout to prevent infinite loading
+    const maxTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth check timed out after 35 seconds');
         setLoading(false);
-        setAuthError('Connection timeout. Please check your internet connection and try again.');
+        setAuthError('Connection timeout. Please check your internet connection.');
       }
-    }, 15000);
+    }, 35000);
 
-    // Proceed with auth check
     apiFetch('/api/auth/me')
       .then(async (userData) => {
-        if (!isMounted) return;
         clearTimeout(maxTimeout);
         setUser(userData);
-        setAuthError(null);
-        // Check if user is already checked in today (don't block if this fails)
+        // Check if user is already checked in today
         try {
           await checkCurrentCheckinStatus(userData);
         } catch (checkinError) {
@@ -43,34 +37,21 @@ export function AuthProvider({ children }) {
         }
       })
       .catch((err) => {
-        if (!isMounted) return;
         clearTimeout(maxTimeout);
         setUser(null);
         console.error('Auth error:', err);
-        const errorMsg = err.message || '';
-        const lowerMsg = errorMsg.toLowerCase();
-        
-        if (lowerMsg.includes('unauthorized') || lowerMsg.includes('401')) {
+        if (err.message && err.message.toLowerCase().includes('unauthorized')) {
           setAuthError('Session expired or not authorized. Please log in again.');
-        } else if (lowerMsg.includes('timeout') || lowerMsg.includes('abort')) {
+        } else if (err.message && err.message.toLowerCase().includes('timeout')) {
           setAuthError('Connection timeout. Please check your internet connection.');
-        } else if (lowerMsg.includes('failed to fetch') || lowerMsg.includes('network') || lowerMsg.includes('cors')) {
-          setAuthError('Cannot connect to server. Please check your internet connection and ensure the backend is accessible.');
         } else {
-          setAuthError(`Connection error: ${errorMsg}`);
+          setAuthError(null);
         }
       })
       .finally(() => {
-        if (isMounted) {
-          clearTimeout(maxTimeout);
-          setLoading(false);
-        }
+        clearTimeout(maxTimeout);
+        setLoading(false);
       });
-
-    return () => {
-      isMounted = false;
-      clearTimeout(maxTimeout);
-    };
   }, []);
 
   const checkCurrentCheckinStatus = async (userData) => {
