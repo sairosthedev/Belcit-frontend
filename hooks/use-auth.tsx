@@ -15,19 +15,26 @@ export function AuthProvider({ children }) {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
-    // Set a maximum timeout to prevent infinite loading (reduced to 15 seconds)
+    console.log('AuthProvider: Starting auth check...');
+    
+    // Set a maximum timeout to prevent infinite loading (10 seconds for faster feedback)
     const maxTimeout = setTimeout(() => {
       if (loading) {
-        console.warn('Auth check timed out after 15 seconds');
+        console.warn('Auth check timed out after 10 seconds - forcing loading to false');
         setLoading(false);
         setAuthError('Connection timeout. Please check your internet connection and backend server status.');
       }
-    }, 15000);
+    }, 10000);
 
     // Add a small delay to ensure the app is fully loaded
     const initTimeout = setTimeout(() => {
+      console.log('AuthProvider: Making API call to /api/auth/me');
+      const startTime = Date.now();
+      
       apiFetch('/api/auth/me')
         .then(async (userData) => {
+          const duration = Date.now() - startTime;
+          console.log(`AuthProvider: API call succeeded in ${duration}ms`, userData);
           clearTimeout(maxTimeout);
           setUser(userData);
           // Check if user is already checked in today
@@ -39,24 +46,29 @@ export function AuthProvider({ children }) {
           }
         })
         .catch((err) => {
+          const duration = Date.now() - startTime;
+          console.error(`AuthProvider: API call failed after ${duration}ms:`, err);
           clearTimeout(maxTimeout);
           setUser(null);
-          console.error('Auth error:', err);
           if (err.message && err.message.toLowerCase().includes('unauthorized')) {
             setAuthError('Session expired or not authorized. Please log in again.');
           } else if (err.message && err.message.toLowerCase().includes('timeout')) {
             setAuthError('Connection timeout. Please check your internet connection.');
+          } else if (err.message && err.message.toLowerCase().includes('network')) {
+            setAuthError('Network error. Please check your internet connection.');
           } else {
             setAuthError(null);
           }
         })
         .finally(() => {
+          console.log('AuthProvider: API call finished, setting loading to false');
           clearTimeout(maxTimeout);
           setLoading(false);
         });
-    }, 500); // Small delay to ensure Capacitor is ready
+    }, 500); // Small delay to ensure app is ready
 
     return () => {
+      console.log('AuthProvider: Cleanup - clearing timeouts');
       clearTimeout(maxTimeout);
       clearTimeout(initTimeout);
     };

@@ -23,13 +23,17 @@ export default function Home() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
         <p className="text-sm text-muted-foreground text-center">Connecting to server...</p>
-        <p className="text-xs text-muted-foreground text-center max-w-md">If this takes too long, check your internet connection and ensure the backend is accessible</p>
+        <p className="text-xs text-muted-foreground text-center max-w-md">This should take less than 10 seconds. If it takes longer, check your internet connection.</p>
         <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+          onClick={() => {
+            console.log('User clicked retry - reloading page');
+            window.location.reload();
+          }} 
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
         >
           Retry Connection
         </button>
+        <p className="text-xs text-muted-foreground mt-2">Open browser console (F12) to see debug logs</p>
       </div>
     )
   }

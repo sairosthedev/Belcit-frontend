@@ -42,7 +42,7 @@ export default function DashboardLayout({
         <div 
           className={`${!mounted || (!isCheckedIn && showCheckinModal) ? "pointer-events-none opacity-50" : ""} ${isSmallScreen ? "p-2" : "p-4 md:p-6"}`}
         >
-          {children}
+            {children}
         </div>
         {!mounted && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
@@ -54,19 +54,19 @@ export default function DashboardLayout({
       {/* Mandatory Check-in Modal */}
       {mounted && (
         <>
-          <MandatoryCheckinModal
-            user={user}
-            onCheckIn={handleCheckIn}
-            isOpen={showCheckinModal}
-          />
-          
-          {/* Mandatory Check-out Modal */}
-          <MandatoryCheckoutModal
-            user={user}
-            onCheckOut={handleCheckOutAndLogout}
-            onCancel={() => setShowCheckoutModal(false)}
-            isOpen={showCheckoutModal}
-          />
+      <MandatoryCheckinModal
+        user={user}
+        onCheckIn={handleCheckIn}
+        isOpen={showCheckinModal}
+      />
+      
+      {/* Mandatory Check-out Modal */}
+      <MandatoryCheckoutModal
+        user={user}
+        onCheckOut={handleCheckOutAndLogout}
+        onCancel={() => setShowCheckoutModal(false)}
+        isOpen={showCheckoutModal}
+      />
         </>
       )}
     </SidebarProvider>
