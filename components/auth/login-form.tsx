@@ -62,27 +62,27 @@ export function LoginForm() {
         transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
       >
         <Card className="w-full border-2 hover:border-primary/50 transition-all duration-300 shadow-2xl bg-gradient-to-br from-background via-background to-primary/5 backdrop-blur-sm">
-          <CardHeader className="space-y-2">
-            <div className="flex items-center justify-center mb-4">
+          <CardHeader className="space-y-2 p-4 sm:p-6">
+            <div className="flex items-center justify-center mb-2 sm:mb-4">
               <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
               >
-                <Shield className="h-16 w-16 text-primary" />
+                <Shield className="h-12 w-12 sm:h-16 sm:w-16 text-primary" />
               </motion.div>
             </div>
-            <CardTitle className="text-3xl font-bold text-center">
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-center">
               <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Welcome Back
               </span>
             </CardTitle>
-            <CardDescription className="text-center text-base">
+            <CardDescription className="text-center text-sm sm:text-base">
               Enter your credentials to access the management system
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
                 <FormField
                   control={form.control}
                   name="username"
@@ -97,7 +97,7 @@ export function LoginForm() {
                           <Input
                             placeholder="your.username"
                             {...field}
-                            className="border-2 focus:border-primary transition-all h-11"
+                            className="border-2 focus:border-primary transition-all h-10 sm:h-11 text-base"
                           />
                         </motion.div>
                       </FormControl>
@@ -120,7 +120,7 @@ export function LoginForm() {
                             type="password"
                             placeholder="••••••••"
                             {...field}
-                            className="border-2 focus:border-primary transition-all h-11"
+                            className="border-2 focus:border-primary transition-all h-10 sm:h-11 text-base"
                           />
                         </motion.div>
                       </FormControl>
@@ -143,7 +143,7 @@ export function LoginForm() {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
                     disabled={isLoading}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />

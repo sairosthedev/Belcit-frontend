@@ -29,26 +29,33 @@ export default function SalesHistoryPage() {
   }, [user]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
-  // Print receipt with authentication
+  // Print receipt with authentication and Sunmi support
   const printReceipt = async (saleId: string) => {
-    const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'text/html',
-      },
-      credentials: 'include',
-    });
-    if (!res.ok) {
-      alert('Failed to print receipt.');
-      return;
-    }
-    const html = await res.text();
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
+    try {
+      const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Accept': 'text/html',
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        toast.error('Failed to print receipt.');
+        return;
+      }
+      const html = await res.text();
+      
+      // Try Sunmi native printing first, fallback to browser print
+      const sunmiPrinted = await sunmiPrintReceipt(html);
+      
+      if (sunmiPrinted) {
+        toast.success("Receipt sent to Sunmi printer", { duration: 2000 });
+      } else {
+        toast.success("Receipt printed", { duration: 2000 });
+      }
+    } catch (err: any) {
+      console.error('Print error:', err);
+      toast.error(err.message || 'Failed to print receipt.', { duration: 2000 });
     }
   };
 

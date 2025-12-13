@@ -29,7 +29,7 @@ interface ActivityItem {
 
 const formatDate = (date: string): string => new Date(date).toLocaleDateString();
 
-const StatCard = ({ title, value, description, icon: Icon, iconColor, loading = false, index = 0 }: any) => (
+const StatCard = ({ title, value, description, icon: Icon, iconColor, loading = false, index = 0, isPOSDevice = false }: any) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -352,6 +352,7 @@ const StockClerkDashboard = ({ user }: { user: User }) => {
             iconColor="text-blue-500"
             loading={isLoading}
             index={0}
+            isPOSDevice={isPOSDevice}
           />
           <StatCard
             title="Stocktakes This Month"
@@ -361,6 +362,7 @@ const StockClerkDashboard = ({ user }: { user: User }) => {
             iconColor="text-green-500"
             loading={isLoading}
             index={1}
+            isPOSDevice={isPOSDevice}
           />
           <StatCard
             title="Discrepancies"
@@ -370,6 +372,7 @@ const StockClerkDashboard = ({ user }: { user: User }) => {
             iconColor="text-yellow-500"
             loading={isLoading}
             index={2}
+            isPOSDevice={isPOSDevice}
           />
         </div>
 

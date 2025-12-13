@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api"
 import { ShoppingBag, Printer } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { printReceipt as sunmiPrintReceipt } from "@/lib/sunmi-printer"
 
 export function RecentSales() {
   const [sales, setSales] = useState<any[]>([])
@@ -61,17 +62,20 @@ export function RecentSales() {
         return;
       }
       const html = await res.text();
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+      
+      // Try Sunmi native printing first, fallback to browser print
+      const sunmiPrinted = await sunmiPrintReceipt(html);
+      
+      if (sunmiPrinted) {
+        toast.success("Receipt sent to Sunmi printer", { duration: 2000 });
+      } else {
         toast.success("Receipt printed", { duration: 2000 });
       }
+      
       fetchSales(page);
-    } catch (err) {
-      toast.error('Print error occurred', { duration: 2000 });
+    } catch (err: any) {
+      console.error('Print error:', err);
+      toast.error(err.message || 'Print error occurred', { duration: 2000 });
     }
   };
 

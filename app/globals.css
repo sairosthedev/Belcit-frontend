@@ -135,4 +135,45 @@ body {
   * {
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* Mobile responsive improvements */
+  @media (max-width: 640px) {
+    /* Ensure text is readable on small screens */
+    body {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Better spacing on mobile */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Touch-friendly buttons */
+    button, a[role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0.75rem 1rem;
+    }
+    
+    /* Better table scrolling on mobile */
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+  }
+  
+  /* Tablet and small desktop */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
 }

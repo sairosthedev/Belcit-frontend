@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { printReceipt as sunmiPrintReceipt } from "@/lib/sunmi-printer";
 
 type CartItem = {
   id: number;
@@ -244,7 +245,7 @@ export function POSSystem() {
   };
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
-  // Print receipt for the last sale
+  // Print receipt for the last sale - with Sunmi support
   const printReceipt = async (saleId: string) => {
     try {
       // Fetch the receipt HTML with authentication
@@ -257,16 +258,18 @@ export function POSSystem() {
       });
       if (!res.ok) throw new Error(await res.text());
       const html = await res.text();
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+      
+      // Try Sunmi native printing first, fallback to browser print
+      const sunmiPrinted = await sunmiPrintReceipt(html);
+      
+      if (sunmiPrinted) {
+        toast.success("Receipt sent to Sunmi printer", { duration: 2000 });
+      } else {
+        toast.success("Receipt sent to printer", { duration: 2000 });
       }
-      toast.success("Receipt sent to printer", { duration: 2000 });
-    } catch (err) {
-      toast.error('Failed to print receipt', { duration: 2000 });
+    } catch (err: any) {
+      console.error('Print error:', err);
+      toast.error(err.message || 'Failed to print receipt', { duration: 2000 });
     }
   };
 

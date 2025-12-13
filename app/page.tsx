@@ -65,15 +65,15 @@ export default function Home() {
         <BarChart3 className="h-6 w-6 text-indigo-500 animate-pulse" style={{ animationDelay: '3s' }} />
       </div>
 
-      <div className="container flex flex-col items-center justify-center gap-8 px-4 py-16 z-10">
+      <div className="container flex flex-col items-center justify-center gap-4 sm:gap-6 md:gap-8 px-4 py-8 sm:py-12 md:py-16 z-10">
         {/* Header Section */}
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-4 sm:gap-6 w-full">
           {/* Logo */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-slate-800 rounded-2xl blur-xl opacity-30 animate-pulse" />
-            <div className="relative rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border-4 border-white dark:border-slate-700 p-6 hover:scale-105 transition-transform duration-300">
+            <div className="relative rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border-2 sm:border-4 border-white dark:border-slate-700 p-4 sm:p-6 hover:scale-105 transition-transform duration-300">
               <div className="flex items-center justify-center">
-                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-slate-800 dark:from-blue-400 dark:to-slate-300 tracking-tighter">
+                <span className="text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-slate-800 dark:from-blue-400 dark:to-slate-300 tracking-tighter">
                   BT
                 </span>
               </div>
@@ -81,22 +81,22 @@ export default function Home() {
           </div>
 
           {/* Company Name */}
-          <div className="text-center space-y-3">
-            <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-blue-600 to-slate-800 dark:from-slate-100 dark:via-blue-400 dark:to-slate-300 sm:text-6xl">
+          <div className="text-center space-y-2 sm:space-y-3 w-full">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-blue-600 to-slate-800 dark:from-slate-100 dark:via-blue-400 dark:to-slate-300 px-2">
               BELCIT TRADING
             </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-slate-800 mx-auto rounded-full" />
-            <p className="text-lg text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
+            <div className="w-16 sm:w-24 h-0.5 sm:h-1 bg-gradient-to-r from-blue-600 to-slate-800 mx-auto rounded-full" />
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider px-2">
               Management System
             </p>
-            <div className="flex items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 sm:mt-4 px-2">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full" />
                 <span>Enterprise Grade</span>
               </div>
               <div className="w-1 h-1 bg-slate-400 rounded-full" />
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                 <span>Secure Portal</span>
               </div>
             </div>
@@ -104,13 +104,13 @@ export default function Home() {
         </div>
 
         {/* Login Form Section */}
-        <div className="mt-8 w-full max-w-md">
+        <div className="mt-4 sm:mt-6 md:mt-8 w-full max-w-md px-2 sm:px-4">
           <div className="group relative">
             {/* Glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-slate-700 to-blue-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200" />
+            <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-blue-600 via-slate-700 to-blue-600 rounded-xl sm:rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200" />
             
             {/* Main form container */}
-            <div className="relative rounded-2xl bg-white/98 dark:bg-slate-900/98 shadow-2xl p-10 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:shadow-3xl">
+            <div className="relative rounded-xl sm:rounded-2xl bg-white/98 dark:bg-slate-900/98 shadow-2xl p-4 sm:p-6 md:p-10 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:shadow-3xl">
               {/* Form header */}
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 mb-4">
@@ -147,7 +147,7 @@ export default function Home() {
         </div>
 
         {/* Features Preview */}
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl">
+        <div className="mt-4 sm:mt-6 md:mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 w-full max-w-2xl px-2 sm:px-4">
           <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm border border-slate-200/30 dark:border-slate-700/30 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all duration-300">
             <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Inventory</span>
