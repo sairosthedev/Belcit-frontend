@@ -21,22 +21,41 @@ Sunmi V2 Pro's WebView has built-in printer SDK. The code will automatically det
 2. Run: `console.log(window.wm_print, window.wmPrinter, window.SunmiPrinterNative)`
 3. If any exist, printing should work automatically
 
-## Option 2: Add Sunmi Printer SDK (Recommended for Native App)
+## Option 2: Add Sunmi Printer SDK (Optional - Not Required!)
 
-### Step 1: Download Sunmi Printer SDK
+**IMPORTANT:** The current implementation uses **reflection** to call Sunmi SDK methods, which means **you don't need to download the SDK JAR file**. It will work automatically if the Sunmi printer service is installed on your device (which it should be on Sunmi V2 Pro).
 
-1. Go to: https://developer.sunmi.com/docs/en-US/doc/printer-sdk-en
-2. Download the latest Sunmi Printer SDK (JAR or AAR file)
-3. Save it as `sunmi-printer-sdk.jar` or `sunmi-printer-sdk.aar`
+### If You Still Want to Add SDK (Optional):
 
-### Step 2: Add SDK to Android Project
+The Sunmi SDK can be obtained from:
+1. **Sunmi Developer Portal** (requires account):
+   - Visit: https://developer.sunmi.com (main portal)
+   - Navigate to Downloads or SDK section
+   - Look for "Printer SDK" or "POS SDK"
+   
+2. **Sunmi Support**:
+   - Contact Sunmi support: support@sunmi.com
+   - Request Printer SDK for Android development
+   
+3. **GitHub/Community**:
+   - Search GitHub for "sunmi printer sdk"
+   - Check Sunmi developer community forums
+
+**Note:** The SDK file is typically named:
+- `sunmi-printer-sdk.jar` or
+- `sunmi-printer-sdk.aar` or  
+- `woyou-printer-sdk.jar`
+
+### Step 2: Add SDK to Android Project (Only if you downloaded SDK)
 
 1. Copy SDK file to: `android/app/libs/sunmi-printer-sdk.jar`
 2. The build.gradle is already configured to include JAR files from libs/
 
-### Step 3: Update MainActivity.java
+### Step 3: Update MainActivity.java (Only if you added SDK JAR)
 
-Uncomment the Sunmi SDK code in `MainActivity.java`:
+**Note:** If you're using the reflection method (current implementation), you can skip this step!
+
+If you added the SDK JAR file, uncomment the Sunmi SDK code in `MainActivity.java`:
 
 ```java
 // Uncomment these imports:
@@ -78,12 +97,21 @@ if (woyouService != null) {
 npm run build:android
 ```
 
-## Option 3: Use Current Implementation (Works Without SDK)
+## Option 3: Use Current Implementation (RECOMMENDED - Works Without SDK!)
 
-The current code uses **reflection** to call Sunmi SDK methods. This works if:
-- Sunmi printer service is installed on device
-- Service is running
-- App has permission to access printer
+**✅ This is the current setup and should work immediately!**
+
+The current code uses **reflection** to call Sunmi SDK methods. This means:
+- ✅ **No SDK download needed** - Works without SDK JAR file
+- ✅ **Automatic detection** - Finds Sunmi printer service automatically
+- ✅ **Works on Sunmi V2 Pro** - Printer service is pre-installed
+- ✅ **No manual setup** - Just rebuild APK and install
+
+**How it works:**
+1. Code binds to Sunmi printer service (`woyou.aidlservice.jiuiv5`)
+2. Uses Java reflection to call SDK methods
+3. No SDK JAR file required - service is already on device
+4. Prints directly to built-in thermal printer
 
 **This should work out of the box on Sunmi V2 Pro!**
 

@@ -148,33 +148,70 @@ export class SunmiPrinter {
       // Method 1: SunmiPrinterNative (Injected via MainActivity) - Try direct call first
       if ((window as any).SunmiPrinterNative) {
         console.log('✅ Found SunmiPrinterNative - calling printText directly');
+        console.log('SunmiPrinterNative type:', typeof (window as any).SunmiPrinterNative);
+        console.log('SunmiPrinterNative methods:', Object.keys((window as any).SunmiPrinterNative || {}));
         try {
-          if (typeof (window as any).SunmiPrinterNative.printText === 'function') {
-            (window as any).SunmiPrinterNative.printText(text);
-            console.log('✅ SunmiPrinterNative.printText called successfully');
-            return true;
-          } else {
-            // Try as function
-            (window as any).SunmiPrinterNative(text);
-            console.log('✅ SunmiPrinterNative called as function');
+          const native = (window as any).SunmiPrinterNative;
+          
+          // Try printText method
+          if (typeof native.printText === 'function') {
+            console.log('Calling SunmiPrinterNative.printText with text length:', text.length);
+            native.printText(text);
+            console.log('✅ SunmiPrinterNative.printText called successfully - print should happen now');
+            // Give it a moment to process
+            await new Promise(resolve => setTimeout(resolve, 100));
             return true;
           }
-        } catch (e) {
-          console.error('SunmiPrinterNative direct call failed:', e);
+          
+          // Try as direct function call
+          if (typeof native === 'function') {
+            console.log('Calling SunmiPrinterNative as function with text length:', text.length);
+            native(text);
+            console.log('✅ SunmiPrinterNative called as function - print should happen now');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return true;
+          }
+          
+          // Try call method
+          if (typeof native.call === 'function') {
+            console.log('Calling SunmiPrinterNative.call("printText")');
+            native.call('printText', text);
+            console.log('✅ SunmiPrinterNative.call executed');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return true;
+          }
+        } catch (e: any) {
+          console.error('❌ SunmiPrinterNative direct call failed:', e);
+          console.error('Error details:', e?.message, e?.stack);
           // Fall through to try other methods
         }
+      } else {
+        console.warn('⚠️ SunmiPrinterNative not found in window object');
+        console.log('Available window properties:', Object.keys(window).filter(k => 
+          k.toLowerCase().includes('print') || 
+          k.toLowerCase().includes('sunmi') || 
+          k.toLowerCase().includes('wm') ||
+          k.toLowerCase().includes('native')
+        ));
       }
       
       // Method 1b: Try wm_print directly (most common Sunmi method)
       if (typeof (window as any).wm_print === 'function') {
         console.log('✅ Found wm_print - calling directly');
         try {
+          console.log('Calling wm_print with text length:', text.length);
           (window as any).wm_print(text);
-          console.log('✅ wm_print called successfully');
+          console.log('✅ wm_print called successfully - print should happen now');
+          // Give it a moment to process
+          await new Promise(resolve => setTimeout(resolve, 100));
           return true;
-        } catch (e) {
-          console.error('wm_print direct call failed:', e);
+        } catch (e: any) {
+          console.error('❌ wm_print direct call failed:', e);
+          console.error('Error details:', e?.message, e?.stack);
         }
+      } else {
+        console.log('⚠️ wm_print not found as function');
+        console.log('window.wm_print type:', typeof (window as any).wm_print);
       }
       
       // Method 2: wmPrinter (Sunmi WebView Printer API)
@@ -688,6 +725,47 @@ export class SunmiPrinter {
     }
   }
 }
+
+/**
+ * Test function to debug printing - call from browser console
+ * Usage: window.testSunmiPrint()
+ */
+(window as any).testSunmiPrint = async function() {
+  console.log('🧪 Testing Sunmi Print...');
+  console.log('User Agent:', navigator.userAgent);
+  console.log('Vendor:', navigator.vendor);
+  
+  const testText = 'TEST PRINT\nBELCIT TRADING\n' + new Date().toLocaleString() + '\n\n';
+  
+  console.log('Available print methods:');
+  console.log('- SunmiPrinterNative:', (window as any).SunmiPrinterNative);
+  console.log('- wm_print:', (window as any).wm_print);
+  console.log('- wmPrinter:', (window as any).wmPrinter);
+  console.log('- sunmiPrinter:', (window as any).sunmiPrinter);
+  console.log('- wwise:', (window as any).wwise);
+  console.log('- SunmiPrinter:', (window as any).SunmiPrinter);
+  console.log('- sunmi:', (window as any).sunmi);
+  console.log('- Android:', (window as any).Android);
+  console.log('- Printer:', (window as any).Printer);
+  console.log('- printRaw:', (window as any).printRaw);
+  
+  const printer = SunmiPrinter.getInstance();
+  console.log('Is Sunmi device:', printer.isSunmiDevice);
+  console.log('Printer available:', printer.isAvailable());
+  
+  console.log('Attempting test print...');
+  try {
+    const success = await printer.printText(testText);
+    console.log('Print result:', success);
+    if (success) {
+      console.log('✅ Test print sent successfully!');
+    } else {
+      console.error('❌ Test print returned false');
+    }
+  } catch (e) {
+    console.error('❌ Test print error:', e);
+  }
+};
 
 /**
  * Convenience function to print receipt

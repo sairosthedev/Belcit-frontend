@@ -41,8 +41,10 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
     
-    // Sunmi Printer SDK - Add the SDK JAR file to android/app/libs/ directory
-    // Download from: https://developer.sunmi.com/docs/en-US/doc/printer-sdk-en
+    // Sunmi Printer SDK - OPTIONAL: Add SDK JAR file to android/app/libs/ if you have it
+    // Note: SDK is NOT required! Current implementation uses reflection to call Sunmi printer service
+    // The printer service (woyou.aidlservice.jiuiv5) is pre-installed on Sunmi devices
+    // If you have the SDK JAR, place it in android/app/libs/ and it will be included automatically
     implementation fileTree(include: ['*.aar', '*.jar'], dir: 'libs')
 }
 

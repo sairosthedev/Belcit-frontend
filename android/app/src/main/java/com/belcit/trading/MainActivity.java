@@ -132,8 +132,22 @@ public class MainActivity extends BridgeActivity {
     public class SunmiPrinterJSInterface {
         @JavascriptInterface
         public void printText(String text) {
-            Log.d(TAG, "🖨️ printText called from JavaScript, length: " + text.length());
-            Log.d(TAG, "Text preview: " + text.substring(0, Math.min(100, text.length())));
+            Log.d(TAG, "🖨️ ===== PRINT TEXT CALLED FROM JAVASCRIPT =====");
+            Log.d(TAG, "Text length: " + text.length());
+            Log.d(TAG, "Text preview: " + text.substring(0, Math.min(200, text.length())));
+            
+            // Print immediately using runOnUiThread to ensure it executes
+            final String textToPrint = text; // Final variable for inner class
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    printTextImmediate(textToPrint);
+                }
+            });
+        }
+        
+        private void printTextImmediate(String text) {
+            Log.d(TAG, "🖨️ printTextImmediate called on UI thread");
             
             // Method 1: Try using Sunmi Printer SDK via AIDL service
             // This is the proper way to access Sunmi V2 Pro's built-in thermal printer
@@ -156,10 +170,19 @@ public class MainActivity extends BridgeActivity {
                             woyouService.getClass().getMethod("printText", String.class, 
                                 Class.forName("woyou.aidlservice.jiuiv5.ICallback")).invoke(woyouService, text, null);
                             
-                            Log.d(TAG, "✅ Printed via Sunmi SDK");
-                            unbindService(this);
+                            Log.d(TAG, "✅ ✅ ✅ PRINTED VIA SUNMI SDK ✅ ✅ ✅");
+                            // Don't unbind immediately - let it finish printing
+                            new android.os.Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    unbindService(printService);
+                                }
+                            }, 2000);
+                            return; // Success - exit early
                         } catch (Exception e) {
-                            Log.e(TAG, "Sunmi SDK print error", e);
+                            Log.e(TAG, "❌ Sunmi SDK print error", e);
+                            Log.e(TAG, "Error message: " + e.getMessage());
+                            e.printStackTrace();
                             // Fall through to other methods
                         }
                     }
