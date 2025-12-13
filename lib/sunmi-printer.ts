@@ -107,9 +107,10 @@ export class SunmiPrinter {
   }
 
   public isAvailable(): boolean {
-    const available = this.isSunmiDevice && this.printerAvailable;
+    // On Sunmi devices, always consider printer available (SDK might be injected dynamically)
+    const available = this._isSunmiDevice || this.printerAvailable;
     console.log('Sunmi Printer Available:', available, {
-      isSunmiDevice: this.isSunmiDevice,
+      isSunmiDevice: this._isSunmiDevice,
       printerAvailable: this.printerAvailable
     });
     return available;
@@ -214,16 +215,42 @@ export class SunmiPrinter {
         return true;
       }
       
-      // If we're on a Sunmi device but no SDK found, throw error instead of returning false
-      // This prevents fallback to browser print
+      // If we're on a Sunmi device but no SDK found, try one more time with direct calls
+      // Sometimes SDKs are available but not detected properly
       if (this._isSunmiDevice) {
+        console.warn('⚠️ No SDK detected, but trying direct print calls anyway...');
+        
+        // Try calling wm_print directly (most common Sunmi method)
+        try {
+          if (typeof (window as any).wm_print === 'function') {
+            console.log('Trying direct wm_print call');
+            (window as any).wm_print(text);
+            return true;
+          }
+        } catch (e) {
+          console.warn('Direct wm_print call failed:', e);
+        }
+        
+        // Try SunmiPrinterNative directly
+        try {
+          if ((window as any).SunmiPrinterNative && typeof (window as any).SunmiPrinterNative.printText === 'function') {
+            console.log('Trying direct SunmiPrinterNative call');
+            (window as any).SunmiPrinterNative.printText(text, fontSize, align || 'left', bold || false);
+            return true;
+          }
+        } catch (e) {
+          console.warn('Direct SunmiPrinterNative call failed:', e);
+        }
+        
         console.error('❌ Sunmi device detected but no printer SDK found');
         console.error('Available window methods:', Object.keys(window).filter(k => 
           k.toLowerCase().includes('print') || 
           k.toLowerCase().includes('sunmi') || 
           k.toLowerCase().includes('wm')
         ));
-        throw new Error('No printer SDK detected. Ensure you are using the native Android app, not browser.');
+        // Don't throw error - return false so caller can handle it
+        // The exported function will handle the error appropriately
+        return false;
       }
       
       console.warn('No Sunmi printer SDK found');
@@ -256,6 +283,7 @@ export class SunmiPrinter {
       console.log('🖨️ Attempting to print receipt, text length:', text.length);
       console.log('🔍 Is Sunmi device:', isSunmiDevice);
       console.log('🔍 Printer available:', this.isAvailable());
+      console.log('🔍 Full user agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
       
       // Print with formatting - this will try all available methods
       const success = await this.printFormattedReceipt(text);
@@ -264,9 +292,10 @@ export class SunmiPrinter {
         console.log('✅ Print command sent successfully');
         return true;
       } else if (isSunmiDevice) {
-        // On Sunmi, if no method worked, throw error instead of returning false
-        // This prevents fallback to browser print
-        throw new Error('No printer SDK detected. Please ensure you are using the native Android app.');
+        // On Sunmi, if no method worked, log but don't throw error
+        // Let the exported function decide what to do
+        console.warn('⚠️ PrintFormattedReceipt returned false on Sunmi device');
+        return false;
       }
       
       return false;
@@ -672,9 +701,16 @@ export async function printReceipt(html: string): Promise<boolean> {
         console.log('✅ Sunmi printing successful - receipt sent to thermal printer');
         return true;
       } else {
-        // Even if printReceipt returns false, we tried - don't open browser
-        console.warn('⚠️ Sunmi printing returned false - but we tried all methods');
-        throw new Error('Printer not responding. Check printer power, paper, and settings.');
+        // Even if printReceipt returns false, log what we tried
+        console.warn('⚠️ Sunmi printing returned false - printing methods attempted but none succeeded');
+        console.warn('This might mean:');
+        console.warn('1. Printer SDK not loaded/injected');
+        console.warn('2. Printer hardware issue (power, paper, connection)');
+        console.warn('3. Printer service not running');
+        
+        // Don't throw error - let the caller show a user-friendly message
+        // But return false so we don't open browser window
+        return false;
       }
     } catch (error: any) {
       console.error('❌ Sunmi printing error:', error);

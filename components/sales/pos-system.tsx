@@ -236,9 +236,16 @@ export function POSSystem() {
       
       // Auto-print receipt after successful sale (SILENT - no popup, no window opening)
       // This will print directly to Sunmi thermal printer or show error
-      printReceipt(sale._id).then(() => {
-        console.log('✅ Receipt printed successfully');
-        toast.success("Receipt printed", { duration: 2000 });
+      printReceipt(sale._id).then((printed: boolean) => {
+        if (printed) {
+          console.log('✅ Receipt printed successfully');
+          toast.success("Receipt printed", { duration: 2000 });
+        } else {
+          console.warn('⚠️ Print returned false - printer might not be available');
+          toast.warning("Receipt printing unavailable. Check printer connection.", { 
+            duration: 3000 
+          });
+        }
       }).catch((printErr: any) => {
         console.error('❌ Auto-print failed:', printErr);
         // Show error but don't fail the sale
@@ -261,13 +268,14 @@ export function POSSystem() {
 
   // Print receipt for the last sale - with Sunmi support
   const printReceipt = async (saleId: string) => {
+    console.log('🖨️ printReceipt called with saleId:', saleId);
     try {
       // Normalize API base URL (remove trailing slash)
       const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
       
       // Fetch the receipt HTML with authentication
       const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
-      console.log('Fetching receipt from:', receiptUrl);
+      console.log('📄 Fetching receipt from:', receiptUrl);
       
       const res = await fetch(receiptUrl, {
         headers: {
@@ -276,21 +284,30 @@ export function POSSystem() {
         },
         credentials: 'include',
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Failed to fetch receipt:', errorText);
+        throw new Error(errorText);
+      }
       const html = await res.text();
+      console.log('✅ Receipt HTML fetched, length:', html.length);
       
       // Try Sunmi native printing (NO POPUP, NO WINDOW OPENING on Sunmi devices)
+      console.log('🖨️ Calling sunmiPrintReceipt...');
       const sunmiPrinted = await sunmiPrintReceipt(html);
+      console.log('🖨️ sunmiPrintReceipt returned:', sunmiPrinted);
       
       if (sunmiPrinted) {
         toast.success("Receipt sent to thermal printer", { duration: 2000 });
       } else {
         // This should never happen on Sunmi - if it does, error was thrown
         // Only non-Sunmi devices reach here
-        toast.success("Opening print dialog...", { duration: 2000 });
+        console.warn('⚠️ sunmiPrintReceipt returned false');
+        toast.warning("Printer not available", { duration: 2000 });
       }
     } catch (err: any) {
-      console.error('Print error:', err);
+      console.error('❌ Print error:', err);
+      console.error('Error stack:', err.stack);
       toast.error(err.message || 'Failed to print receipt', { duration: 3000 });
     }
   };
