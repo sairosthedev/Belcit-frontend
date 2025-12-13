@@ -30,6 +30,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       ...options,
       headers,
       signal: controller.signal,
+      mode: 'cors', // Explicitly allow CORS
+      credentials: 'omit', // Don't send cookies for cross-origin requests
     });
     
     clearTimeout(timeoutId);
@@ -51,8 +53,16 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
+      console.error('API Request Timeout:', fullUrl);
       throw new Error('Request timeout - Please check your internet connection');
     }
+    // Log network errors for debugging
+    if (error.message && error.message.includes('Failed to fetch')) {
+      console.error('Network Error - Failed to fetch:', fullUrl);
+      console.error('This might be a CORS issue or network connectivity problem');
+      throw new Error('Network error - Unable to connect to server. Please check your internet connection.');
+    }
+    console.error('API Error:', error);
     throw error;
   }
 } 
