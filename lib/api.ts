@@ -70,6 +70,12 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       const error = new Error(errorData.message || errorText);
       // Attach the full error data to the error object
       Object.assign(error, errorData);
+      
+      // For 401 errors, mark them as auth errors so they can be handled gracefully
+      if (res.status === 401) {
+        (error as any).isAuthError = true;
+      }
+      
       throw error;
     }
     return res.json();

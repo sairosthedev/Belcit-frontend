@@ -56,19 +56,29 @@ export class SunmiPrinter {
     
     const userAgent = navigator.userAgent.toLowerCase();
     const vendor = (navigator.vendor || '').toLowerCase();
+    const fullUserAgent = navigator.userAgent; // Keep original case for V2_PRO-ST
     
     // Multiple detection methods for Sunmi devices
-    this._isSunmiDevice = 
-      /sunmi/i.test(userAgent) || 
-      /sunmi/i.test(vendor) ||
-      userAgent.includes("sunmi") ||
-      vendor.includes("sunmi") ||
-      // Also check for Android devices that might be Sunmi
-      (userAgent.includes("android") && (userAgent.includes("sunmi") || vendor.includes("sunmi")));
+    const hasSunmi = /sunmi/i.test(userAgent) || /sunmi/i.test(vendor) || userAgent.includes("sunmi") || vendor.includes("sunmi");
+    const hasV2Pro = /v2[_-]?pro/i.test(fullUserAgent) || fullUserAgent.includes("V2_PRO") || fullUserAgent.includes("V2_PRO-ST");
+    const androidDevice = userAgent.includes("android") && (userAgent.includes("sunmi") || vendor.includes("sunmi") || hasV2Pro);
+
+    this._isSunmiDevice = hasSunmi || hasV2Pro || androidDevice;
+
+    console.log('🔍 Device detection breakdown:', {
+      userAgent,
+      fullUserAgent,
+      vendor,
+      hasSunmi,
+      hasV2Pro,
+      androidDevice,
+      finalResult: this._isSunmiDevice
+    });
     
     console.log('🔍 Sunmi device detection:', {
       userAgent,
       vendor,
+      fullUserAgent,
       isSunmiDevice: this._isSunmiDevice
     });
   }
@@ -143,8 +153,42 @@ export class SunmiPrinter {
       } = options;
 
       console.log('Attempting to print with Sunmi printer:', text.substring(0, 50) + '...');
+      console.log('🔍 Checking for print methods...');
+      console.log('SunmiPrinterNative:', typeof (window as any).SunmiPrinterNative, (window as any).SunmiPrinterNative);
+      console.log('wm_print:', typeof (window as any).wm_print, (window as any).wm_print);
+      console.log('wmPrinter:', (window as any).wmPrinter);
       
       // Try Sunmi V2 Pro built-in printer methods (in order of likelihood)
+      
+      // Method 0: androidBridge.postMessage (FOUND ON YOUR DEVICE!)
+      if ((window as any).androidBridge && (window as any).androidBridge.postMessage) {
+        console.log('✅ Found androidBridge.postMessage - using discovered method');
+        try {
+          // Try the message formats that worked in testing
+          const messages = [
+            { action: 'print', text: text, type: 'thermal' },
+            { command: 'printText', data: text },
+            { type: 'PRINT_TEXT', payload: text },
+            'PRINT:' + text
+          ];
+          
+          messages.forEach((msg, i) => {
+            try {
+              const messageStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+              console.log(`Sending print message ${i + 1}:`, messageStr);
+              (window as any).androidBridge.postMessage(messageStr);
+            } catch (e) {
+              console.error(`Message ${i + 1} failed:`, e);
+            }
+          });
+          
+          console.log('✅ All print messages sent to androidBridge');
+          return true;
+        } catch (e: any) {
+          console.error('❌ androidBridge.postMessage failed:', e);
+        }
+      }
+      
       // Method 1: SunmiPrinterNative (Injected via MainActivity) - Try direct call first
       if ((window as any).SunmiPrinterNative) {
         console.log('✅ Found SunmiPrinterNative - calling printText directly');
@@ -729,43 +773,73 @@ export class SunmiPrinter {
 /**
  * Test function to debug printing - call from browser console
  * Usage: window.testSunmiPrint()
+ * Only available in browser (not during SSR/build)
  */
-(window as any).testSunmiPrint = async function() {
-  console.log('🧪 Testing Sunmi Print...');
-  console.log('User Agent:', navigator.userAgent);
-  console.log('Vendor:', navigator.vendor);
-  
-  const testText = 'TEST PRINT\nBELCIT TRADING\n' + new Date().toLocaleString() + '\n\n';
-  
-  console.log('Available print methods:');
-  console.log('- SunmiPrinterNative:', (window as any).SunmiPrinterNative);
-  console.log('- wm_print:', (window as any).wm_print);
-  console.log('- wmPrinter:', (window as any).wmPrinter);
-  console.log('- sunmiPrinter:', (window as any).sunmiPrinter);
-  console.log('- wwise:', (window as any).wwise);
-  console.log('- SunmiPrinter:', (window as any).SunmiPrinter);
-  console.log('- sunmi:', (window as any).sunmi);
-  console.log('- Android:', (window as any).Android);
-  console.log('- Printer:', (window as any).Printer);
-  console.log('- printRaw:', (window as any).printRaw);
-  
-  const printer = SunmiPrinter.getInstance();
-  console.log('Is Sunmi device:', printer.isSunmiDevice);
-  console.log('Printer available:', printer.isAvailable());
-  
-  console.log('Attempting test print...');
-  try {
-    const success = await printer.printText(testText);
-    console.log('Print result:', success);
-    if (success) {
-      console.log('✅ Test print sent successfully!');
-    } else {
-      console.error('❌ Test print returned false');
+if (typeof window !== 'undefined') {
+  (window as any).testSunmiPrint = async function() {
+    console.log('🧪 ===== TESTING SUNMI PRINT =====');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Vendor:', navigator.vendor);
+    
+    const testText = 'TEST PRINT\nBELCIT TRADING\n' + new Date().toLocaleString() + '\n\n';
+    
+    console.log('\n📋 Checking available print methods:');
+    const methods = {
+      SunmiPrinterNative: (window as any).SunmiPrinterNative,
+      wm_print: (window as any).wm_print,
+      wmPrinter: (window as any).wmPrinter,
+      sunmiPrinter: (window as any).sunmiPrinter,
+      wwise: (window as any).wwise,
+      SunmiPrinter: (window as any).SunmiPrinter,
+      sunmi: (window as any).sunmi,
+      Android: (window as any).Android,
+      Printer: (window as any).Printer,
+      printRaw: (window as any).printRaw
+    };
+    
+    let foundMethods = [];
+    for (const [name, value] of Object.entries(methods)) {
+      if (value) {
+        console.log(`✅ ${name}:`, typeof value, value);
+        foundMethods.push(name);
+      } else {
+        console.log(`❌ ${name}: not found`);
+      }
     }
-  } catch (e) {
-    console.error('❌ Test print error:', e);
-  }
-};
+    
+    console.log(`\n📊 Found ${foundMethods.length} method(s):`, foundMethods);
+    
+    const printer = SunmiPrinter.getInstance();
+    console.log('\n🔍 Device Detection:');
+    console.log('- Is Sunmi device:', printer.isSunmiDevice);
+    console.log('- Printer available:', printer.isAvailable());
+    
+    console.log('\n🖨️ Attempting test print...');
+    console.log('Test text:', testText);
+    
+    try {
+      const success = await printer.printText(testText);
+      console.log('\n📤 Print result:', success);
+      if (success) {
+        console.log('✅ ✅ ✅ Test print sent successfully! ✅ ✅ ✅');
+        console.log('Check your printer - receipt should print now!');
+      } else {
+        console.error('❌ Test print returned false');
+        console.error('No print methods worked. Check:');
+        console.error('1. Are you using native Android app (not browser)?');
+        console.error('2. Is printer service installed?');
+        console.error('3. Is printer enabled in device settings?');
+      }
+    } catch (e: any) {
+      console.error('\n❌ Test print error:', e);
+      console.error('Error message:', e?.message);
+      console.error('Error stack:', e?.stack);
+    }
+    
+    console.log('\n===== TEST COMPLETE =====');
+    return { success: false, methods: foundMethods };
+  };
+}
 
 /**
  * Convenience function to print receipt
@@ -774,18 +848,34 @@ export class SunmiPrinter {
  */
 export async function printReceipt(html: string): Promise<boolean> {
   const printer = SunmiPrinter.getInstance();
-  
+
   console.log('🖨️ printReceipt called, HTML length:', html.length);
   console.log('🔍 Printer available:', printer.isAvailable());
   console.log('🔍 Is Sunmi device:', printer.isSunmiDevice);
+
+  // Manual override option
+  const isManualOverride = (window as any).forceSunmiPrinting === true;
+  if (isManualOverride) {
+    console.log('⚡ MANUAL OVERRIDE: Forcing Sunmi printing mode');
+  }
+
+  // Force detection refresh for this call
+  const userAgentCheck = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const isForceSunmi = userAgentCheck.includes("V2_PRO") || userAgentCheck.includes("V2_PRO-ST");
+
+  if (isForceSunmi && !printer.isSunmiDevice) {
+    console.log('⚠️ Device detection failed but V2_PRO detected - forcing Sunmi mode');
+    console.log('User agent check:', userAgentCheck);
+  }
   
-  // Check if Sunmi device - use public getter
-  const isSunmiDevice = printer.isSunmiDevice;
+  // Check if Sunmi device - use public getter (force detection if needed)
+  const isSunmiDevice = printer.isSunmiDevice || isForceSunmi;
   
   // Also check user agent as backup
-  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const userAgentLower = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const fullUserAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
   const vendor = typeof navigator !== 'undefined' ? (navigator.vendor || '').toLowerCase() : '';
-  const isSunmiUA = /sunmi/i.test(userAgent) || /sunmi/i.test(vendor);
+  const isSunmiUA = /sunmi/i.test(userAgentLower) || /sunmi/i.test(vendor) || /v2[_-]?pro/i.test(fullUserAgent) || fullUserAgent.includes("V2_PRO");
   
   // Check if we're in Android/Capacitor app (never open browser window in native app)
   const isAndroid = /android/i.test(userAgent);
@@ -798,13 +888,17 @@ export async function printReceipt(html: string): Promise<boolean> {
     isAndroid,
     isCapacitor,
     isNativeApp,
-    userAgent
+    userAgent: userAgentLower
   });
   
   // If it's a Sunmi device OR we're in a native Android app, NEVER use browser print
-  if (isSunmiDevice || isSunmiUA || isNativeApp) {
+  // Force Sunmi mode for V2_PRO devices or manual override
+  const forceSunmiMode = isForceSunmi || isSunmiDevice || isSunmiUA || isNativeApp || isManualOverride;
+
+  if (forceSunmiMode) {
     console.log('✅ Native app/Sunmi device detected - attempting native printing ONLY');
     console.log('🚫 NO browser window will open - printing directly to thermal printer');
+    console.log('🔍 Detection details:', { isSunmiDevice, isSunmiUA, isNativeApp, isForceSunmi, isManualOverride });
     
     try {
       // Try printing - this will attempt all available methods

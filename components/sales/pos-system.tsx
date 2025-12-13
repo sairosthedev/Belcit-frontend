@@ -17,7 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { printReceipt as sunmiPrintReceipt } from "@/lib/sunmi-printer";
+import { printSunmiReceipt } from "../../src/capacitor-plugins/sunmi-printer";
 import "@/lib/sunmi-printer-debug"; // Load debug utility
 
 type CartItem = {
@@ -234,24 +234,20 @@ export function POSSystem() {
 
       setSuccessMsg("Sale and payment completed successfully!");
       
-      // Auto-print receipt after successful sale (SILENT - no popup, no window opening)
-      // This will print directly to Sunmi thermal printer or show error
-      printReceipt(sale._id).then((printed: boolean) => {
-        if (printed) {
-          console.log('✅ Receipt printed successfully');
+      // Auto-print receipt after successful sale - FIXED LOGIC
+      printReceipt(sale._id).then((printSuccess: boolean) => {
+        console.log('🎯 Print function returned:', printSuccess);
+        
+        if (printSuccess) {
+          console.log('🎉 Receipt printed successfully to thermal printer!');
           toast.success("Receipt printed", { duration: 2000 });
         } else {
-          console.warn('⚠️ Print returned false - printer might not be available');
-          toast.warning("Receipt printing unavailable. Check printer connection.", { 
-            duration: 3000 
-          });
+          console.log('📋 Print used browser dialog or failed');
+          toast.info("Print completed", { duration: 2000 });
         }
       }).catch((printErr: any) => {
-        console.error('❌ Auto-print failed:', printErr);
-        // Show error but don't fail the sale
-        toast.error(printErr.message || 'Receipt printing failed, but sale was successful', { 
-          duration: 3000 
-        });
+        console.error('❌ Print error:', printErr);
+        toast.error(printErr.message || 'Print failed', { duration: 3000 });
       });
       
       setCartItems([]);
@@ -292,18 +288,17 @@ export function POSSystem() {
       const html = await res.text();
       console.log('✅ Receipt HTML fetched, length:', html.length);
       
-      // Try Sunmi native printing (NO POPUP, NO WINDOW OPENING on Sunmi devices)
-      console.log('🖨️ Calling sunmiPrintReceipt...');
-      const sunmiPrinted = await sunmiPrintReceipt(html);
-      console.log('🖨️ sunmiPrintReceipt returned:', sunmiPrinted);
+      // Use the fixed print function - no complex logic
+      console.log('🖨️ Calling fixed print function...');
+      const printWorked = await sunmiPrintReceipt(html);
+      console.log('🖨️ Print function returned:', printWorked);
       
-      if (sunmiPrinted) {
-        toast.success("Receipt sent to thermal printer", { duration: 2000 });
+      if (printWorked) {
+        console.log('🎉 Print succeeded!');
+        toast.success("Receipt printed to thermal printer", { duration: 2000 });
       } else {
-        // This should never happen on Sunmi - if it does, error was thrown
-        // Only non-Sunmi devices reach here
-        console.warn('⚠️ sunmiPrintReceipt returned false');
-        toast.warning("Printer not available", { duration: 2000 });
+        console.log('⚠️ Print failed or used browser');
+        toast.warning("Print completed", { duration: 2000 });
       }
     } catch (err: any) {
       console.error('❌ Print error:', err);

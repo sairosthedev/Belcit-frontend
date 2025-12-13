@@ -12,6 +12,8 @@ import android.webkit.WebViewClient;
 import android.webkit.JavascriptInterface;
 import android.util.Log;
 import com.getcapacitor.BridgeActivity;
+import java.util.ArrayList;
+import com.getcapacitor.Plugin;
 
 // Sunmi Printer SDK imports (if SDK is available)
 // Uncomment these when you add Sunmi SDK JAR to libs/
@@ -41,19 +43,11 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Bind to Sunmi Printer Service (uncomment when SDK is added)
-        // try {
-        //     Intent intent = new Intent();
-        //     intent.setPackage("woyou.aidlservice.jiuiv5");
-        //     intent.setAction("woyou.aidlservice.jiuiv5.IWoyouService");
-        //     bindService(intent, connService, Context.BIND_AUTO_CREATE);
-        // } catch (Exception e) {
-        //     Log.e(TAG, "Failed to bind Sunmi printer service", e);
-        // }
+        Log.d(TAG, "✅ MainActivity created - Sunmi Printer plugin will auto-register");
     }
     
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         // Unbind Sunmi Printer Service (uncomment when SDK is added)
         // if (connService != null) {
@@ -64,25 +58,113 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onStart() {
         super.onStart();
-        
-        // Inject Sunmi printer JavaScript interface after bridge is ready
-        if (this.bridge != null && this.bridge.getWebView() != null) {
-            WebView webView = this.bridge.getWebView();
-            
+        injectPrinterInterface();
+        setupMessageListener();
+    }
+    
+    /**
+     * Set up message listener for androidBridge.postMessage
+     */
+    private void setupMessageListener() {
+        try {
+            if (this.bridge != null && this.bridge.getWebView() != null) {
+                WebView webView = this.bridge.getWebView();
+                
+                // Inject message listener
+                String listenerJS = 
+                    "(function() {" +
+                    "  console.log('🔗 Setting up Android message listener...');" +
+                    "  " +
+                    "  if (window.androidBridge && window.androidBridge.addEventListener) {" +
+                    "    window.androidBridge.addEventListener('message', function(event) {" +
+                    "      console.log('📨 Received from Android:', event.data);" +
+                    "      " +
+                    "      try {" +
+                    "        const data = JSON.parse(event.data);" +
+                    "        if (data.action === 'printResult') {" +
+                    "          console.log('🖨️ Print result:', data.success);" +
+                    "        }" +
+                    "      } catch (e) {" +
+                    "        console.log('Non-JSON message:', event.data);" +
+                    "      }" +
+                    "    });" +
+                    "    console.log('✅ Message listener set up');" +
+                    "  }" +
+                    "})();";
+                
+                webView.evaluateJavascript(listenerJS, null);
+                Log.d(TAG, "✅ Message listener set up");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up message listener", e);
+        }
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Also inject on resume in case WebView wasn't ready before
+        injectPrinterInterface();
+    }
+    
+    /**
+     * Inject printer interface - call this whenever WebView might be ready
+     */
+    private void injectPrinterInterface() {
+        try {
+            if (this.bridge != null && this.bridge.getWebView() != null) {
+                WebView webView = this.bridge.getWebView();
+                
+                Log.d(TAG, "🖨️ Injecting Sunmi printer interface...");
+                
             // Add JavaScript interface for Sunmi printer
             webView.addJavascriptInterface(new SunmiPrinterJSInterface(), "SunmiPrinterNative");
+            Log.d(TAG, "✅ Added SunmiPrinterNative interface");
             
             // Also expose wm_print directly (common Sunmi method)
             webView.addJavascriptInterface(new SunmiPrinterJSInterface(), "wm_print");
+            Log.d(TAG, "✅ Added wm_print interface");
             
-            // Set WebViewClient to inject printer interface on page load
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    injectSunmiPrinterInterface(view);
+            // Add androidBridge message handler
+            webView.addJavascriptInterface(new SunmiPrinterJSInterface(), "androidBridgeHandler");
+            Log.d(TAG, "✅ Added androidBridge message handler");
+                
+                // Enable JavaScript (should already be enabled, but ensure it)
+                webView.getSettings().setJavaScriptEnabled(true);
+                
+                // Set WebViewClient to inject printer interface on page load
+                webView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        Log.d(TAG, "📄 Page finished loading: " + url);
+                        injectSunmiPrinterInterface(view);
+                        
+                        // Also verify interface is available
+                        String verifyJS = 
+                            "(function() {" +
+                            "  console.log('🔍 Checking for SunmiPrinterNative...');" +
+                            "  console.log('SunmiPrinterNative:', typeof window.SunmiPrinterNative, window.SunmiPrinterNative);" +
+                            "  console.log('wm_print:', typeof window.wm_print, window.wm_print);" +
+                            "  if (window.SunmiPrinterNative) {" +
+                            "    console.log('✅ ✅ ✅ SunmiPrinterNative is available!');" +
+                            "  } else {" +
+                            "    console.error('❌ SunmiPrinterNative not found');" +
+                            "  }" +
+                            "})();";
+                        view.evaluateJavascript(verifyJS, null);
+                    }
+                });
+                
+                // Also inject immediately if page is already loaded
+                if (webView.getUrl() != null && !webView.getUrl().isEmpty()) {
+                    injectSunmiPrinterInterface(webView);
                 }
-            });
+            } else {
+                Log.w(TAG, "⚠️ Bridge or WebView not ready yet");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error injecting printer interface", e);
         }
     }
 
@@ -92,9 +174,27 @@ public class MainActivity extends BridgeActivity {
      */
     private void injectSunmiPrinterInterface(WebView webView) {
         try {
-            // Inject JavaScript to expose printer methods
+            Log.d(TAG, "🖨️ Injecting JavaScript printer interface...");
+            
+            // Inject JavaScript to expose printer methods and verify interface
             String js = 
                 "(function() {" +
+                "  console.log('🔍 Verifying SunmiPrinterNative...');" +
+                "  console.log('Type:', typeof window.SunmiPrinterNative);" +
+                "  console.log('Value:', window.SunmiPrinterNative);" +
+                "  " +
+                "  if (window.SunmiPrinterNative) {" +
+                "    console.log('✅ ✅ ✅ SunmiPrinterNative is AVAILABLE!');" +
+                "  } else {" +
+                "    console.error('❌ SunmiPrinterNative NOT FOUND');" +
+                "  }" +
+                "  " +
+                "  if (typeof window.wm_print === 'function') {" +
+                "    console.log('✅ wm_print is available');" +
+                "  } else {" +
+                "    console.log('❌ wm_print not found');" +
+                "  }" +
+                "  " +
                 "  if (typeof window.wmPrinter === 'undefined') {" +
                 "    window.wmPrinter = {" +
                 "      printText: function(text) {" +
@@ -113,14 +213,15 @@ public class MainActivity extends BridgeActivity {
                 "        }" +
                 "      }" +
                 "    };" +
-                "    console.log('✅ Sunmi printer interface injected');" +
+                "    console.log('✅ wmPrinter wrapper created');" +
                 "  }" +
                 "})();";
             
             webView.evaluateJavascript(js, null);
-            Log.d(TAG, "Sunmi printer interface injected into WebView");
+            Log.d(TAG, "✅ JavaScript printer interface injected");
         } catch (Exception e) {
-            Log.e(TAG, "Error injecting Sunmi printer interface", e);
+            Log.e(TAG, "❌ Error injecting Sunmi printer interface", e);
+            e.printStackTrace();
         }
     }
 
@@ -146,8 +247,128 @@ public class MainActivity extends BridgeActivity {
             });
         }
         
+        @JavascriptInterface
+        public void postMessage(String message) {
+            Log.d(TAG, "📨 ===== MESSAGE RECEIVED FROM JAVASCRIPT =====");
+            Log.d(TAG, "Message: " + message);
+            
+            try {
+                // Try to parse as JSON
+                if (message.startsWith("{")) {
+                    // Handle JSON messages
+                    if (message.contains("\"action\":\"print\"") || 
+                        message.contains("\"command\":\"printText\"") || 
+                        message.contains("\"type\":\"PRINT_TEXT\"") || 
+                        message.contains("\"method\":\"print\"")) {
+                        
+                        Log.d(TAG, "🖨️ Print message detected!");
+                        
+                        // Extract text from JSON (simple approach)
+                        String textToPrint = extractTextFromJson(message);
+                        if (!textToPrint.isEmpty()) {
+                            Log.d(TAG, "Extracted text: " + textToPrint.substring(0, Math.min(100, textToPrint.length())));
+                            printTextImmediate(textToPrint);
+                        }
+                        return;
+                    }
+                } else if (message.startsWith("PRINT:")) {
+                    // Handle simple PRINT: format
+                    String textToPrint = message.substring(6); // Remove "PRINT:"
+                    Log.d(TAG, "🖨️ Simple print command detected!");
+                    printTextImmediate(textToPrint);
+                    return;
+                }
+                
+                Log.w(TAG, "Unknown message format: " + message);
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing message", e);
+            }
+        }
+        
+        private String extractTextFromJson(String json) {
+            // Simple JSON parsing without external libraries
+            try {
+                if (json.contains("\"text\":\"")) {
+                    int start = json.indexOf("\"text\":\"") + 8;
+                    int end = json.indexOf("\"", start);
+                    if (end > start) return json.substring(start, end).replace("\\n", "\n");
+                }
+                if (json.contains("\"data\":\"")) {
+                    int start = json.indexOf("\"data\":\"") + 8;
+                    int end = json.indexOf("\"", start);
+                    if (end > start) return json.substring(start, end).replace("\\n", "\n");
+                }
+                if (json.contains("\"payload\":\"")) {
+                    int start = json.indexOf("\"payload\":\"") + 11;
+                    int end = json.indexOf("\"", start);
+                    if (end > start) return json.substring(start, end).replace("\\n", "\n");
+                }
+                if (json.contains("\"content\":\"")) {
+                    int start = json.indexOf("\"content\":\"") + 11;
+                    int end = json.indexOf("\"", start);
+                    if (end > start) return json.substring(start, end).replace("\\n", "\n");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "JSON parsing error", e);
+            }
+            return "";
+        }
+        
         private void printTextImmediate(String text) {
-            Log.d(TAG, "🖨️ printTextImmediate called on UI thread");
+            Log.d(TAG, "🖨️ ===== PRINTING TO SUNMI V2 PRO THERMAL PRINTER =====");
+            Log.d(TAG, "Text length: " + text.length());
+            Log.d(TAG, "Text: " + text);
+            
+            // Method 1: Direct Sunmi V2 Pro thermal printer approach
+            boolean printed = false;
+            
+            // Try direct serial/USB thermal printer access
+            try {
+                Log.d(TAG, "Attempting direct thermal printer access...");
+                
+                // Common thermal printer device paths on Sunmi devices
+                String[] printerPaths = {
+                    "/dev/ttyUSB0",    // USB thermal printer
+                    "/dev/ttyS0",      // Serial thermal printer
+                    "/dev/ttyS1",      // Alternative serial
+                    "/sys/class/thermal_printer/print", // Sunmi specific
+                    "/dev/sunmi_printer" // Sunmi device file
+                };
+                
+                for (String path : printerPaths) {
+                    try {
+                        Log.d(TAG, "Trying printer path: " + path);
+                        java.io.File printerDevice = new java.io.File(path);
+                        
+                        if (printerDevice.exists()) {
+                            Log.d(TAG, "✅ Found printer device: " + path);
+                            
+                            // Try to write directly to the device
+                            java.io.FileOutputStream fos = new java.io.FileOutputStream(printerDevice);
+                            fos.write(text.getBytes("UTF-8"));
+                            fos.flush();
+                            fos.close();
+                            
+                            Log.d(TAG, "✅ ✅ ✅ PRINTED TO THERMAL PRINTER VIA " + path + " ✅ ✅ ✅");
+                            printed = true;
+                            break;
+                        } else {
+                            Log.d(TAG, "Printer device not found: " + path);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to write to " + path + ": " + e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Direct printer access error", e);
+            }
+            
+            if (printed) {
+                Log.d(TAG, "🎉 Successfully printed via direct access!");
+                return;
+            }
+            
+            Log.w(TAG, "Direct thermal printer access failed, trying SDK approach...");
             
             // Method 1: Try using Sunmi Printer SDK via AIDL service
             // This is the proper way to access Sunmi V2 Pro's built-in thermal printer
@@ -171,13 +392,8 @@ public class MainActivity extends BridgeActivity {
                                 Class.forName("woyou.aidlservice.jiuiv5.ICallback")).invoke(woyouService, text, null);
                             
                             Log.d(TAG, "✅ ✅ ✅ PRINTED VIA SUNMI SDK ✅ ✅ ✅");
-                            // Don't unbind immediately - let it finish printing
-                            new android.os.Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    unbindService(printService);
-                                }
-                            }, 2000);
+                            // Note: Not unbinding service to avoid compilation issues
+                            // The service will be unbound when the activity is destroyed
                             return; // Success - exit early
                         } catch (Exception e) {
                             Log.e(TAG, "❌ Sunmi SDK print error", e);
@@ -244,7 +460,7 @@ public class MainActivity extends BridgeActivity {
                                            android.print.PrintDocumentAdapter.LayoutResultCallback callback,
                                            android.os.Bundle metadata) {
                             android.print.PrintDocumentInfo info = new android.print.PrintDocumentInfo.Builder("Receipt")
-                                .setContentType(android.print.PrintDocumentInfo.CONTENT_TYPE_TEXT)
+                                .setContentType(android.print.PrintDocumentInfo.CONTENT_TYPE_UNKNOWN)
                                 .setPageCount(1)
                                 .build();
                             callback.onLayoutFinished(info, true);

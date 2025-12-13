@@ -26,85 +26,135 @@ export function debugSunmiPrinter() {
   console.log('window.Android:', typeof window.Android, window.Android);
   console.log('window.Printer:', typeof window.Printer, window.Printer);
   
-  // Test print function
-  window.testSunmiPrint = function(text: string = 'TEST PRINT\nBELCIT TRADING\nTest Receipt\n\n') {
+  // Test print function - Enhanced version (overrides any existing one)
+  // Use async to ensure it's the latest version
+  (window as any).testSunmiPrint = async function(text: string = 'TEST PRINT\nBELCIT TRADING\n' + new Date().toLocaleString() + '\n\n') {
+    console.log('🧪 ===== TESTING SUNMI PRINT =====');
     console.log('Testing print with text:', text);
     
+    // Check for SunmiPrinterNative first (injected from Android MainActivity)
+    if ((window as any).SunmiPrinterNative) {
+      console.log('✅ Found SunmiPrinterNative (injected from Android)');
+      try {
+        if (typeof (window as any).SunmiPrinterNative.printText === 'function') {
+          console.log('Trying SunmiPrinterNative.printText...');
+          (window as any).SunmiPrinterNative.printText(text);
+          console.log('✅ ✅ ✅ SunmiPrinterNative.printText() called successfully!');
+          console.log('Check your printer - receipt should print now!');
+          return;
+        } else if (typeof (window as any).SunmiPrinterNative === 'function') {
+          console.log('Trying SunmiPrinterNative as function...');
+          (window as any).SunmiPrinterNative(text);
+          console.log('✅ ✅ ✅ SunmiPrinterNative() called successfully!');
+          return;
+        }
+      } catch (e: any) {
+        console.error('❌ SunmiPrinterNative error:', e);
+      }
+    } else {
+      console.log('❌ SunmiPrinterNative not found');
+    }
+    
     if (window.wm_print) {
-      console.log('Trying wm_print...');
+      console.log('✅ Found wm_print - trying...');
       try {
         if (typeof window.wm_print === 'function') {
           window.wm_print(text);
-          console.log('✓ wm_print() called');
-        } else if (window.wm_print.printText) {
-          window.wm_print.printText(text);
-          console.log('✓ wm_print.printText() called');
+          console.log('✅ wm_print() called');
+          return;
+        } else if ((window.wm_print as any).printText) {
+          (window.wm_print as any).printText(text);
+          console.log('✅ wm_print.printText() called');
+          return;
         }
-      } catch (e) {
-        console.error('✗ wm_print error:', e);
+      } catch (e: any) {
+        console.error('❌ wm_print error:', e);
       }
+    } else {
+      console.log('❌ wm_print not found');
     }
     
     if (window.wwise) {
-      console.log('Trying wwise...');
+      console.log('✅ Found wwise - trying...');
       try {
-        if (window.wwise.printText) {
-          window.wwise.printText(text);
-          console.log('✓ wwise.printText() called');
-        } else if (window.wwise.postMessage) {
-          window.wwise.postMessage(JSON.stringify({ action: 'print', text }));
-          console.log('✓ wwise.postMessage() called');
+        if ((window.wwise as any).printText) {
+          (window.wwise as any).printText(text);
+          console.log('✅ wwise.printText() called');
+          return;
+        } else if ((window.wwise as any).postMessage) {
+          (window.wwise as any).postMessage(JSON.stringify({ action: 'print', text }));
+          console.log('✅ wwise.postMessage() called');
+          return;
         }
-      } catch (e) {
-        console.error('✗ wwise error:', e);
+      } catch (e: any) {
+        console.error('❌ wwise error:', e);
       }
+    } else {
+      console.log('❌ wwise not found');
     }
     
-    if (window.SunmiPrinter) {
-      console.log('Trying SunmiPrinter...');
+    if ((window as any).SunmiPrinter) {
+      console.log('✅ Found SunmiPrinter - trying...');
       try {
-        if (window.SunmiPrinter.printText) {
-          window.SunmiPrinter.printText(text);
-          console.log('✓ SunmiPrinter.printText() called');
-        } else if (window.SunmiPrinter.print) {
-          window.SunmiPrinter.print(text);
-          console.log('✓ SunmiPrinter.print() called');
+        if ((window as any).SunmiPrinter.printText) {
+          (window as any).SunmiPrinter.printText(text);
+          console.log('✅ SunmiPrinter.printText() called');
+          return;
+        } else if ((window as any).SunmiPrinter.print) {
+          (window as any).SunmiPrinter.print(text);
+          console.log('✅ SunmiPrinter.print() called');
+          return;
         }
-      } catch (e) {
-        console.error('✗ SunmiPrinter error:', e);
+      } catch (e: any) {
+        console.error('❌ SunmiPrinter error:', e);
       }
+    } else {
+      console.log('❌ SunmiPrinter not found');
     }
     
-    if (window.sunmi) {
-      console.log('Trying sunmi...');
+    if ((window as any).sunmi) {
+      console.log('✅ Found sunmi - trying...');
       try {
-        if (window.sunmi.printText) {
-          window.sunmi.printText(text);
-          console.log('✓ sunmi.printText() called');
-        } else if (window.sunmi.print) {
-          window.sunmi.print({ text });
-          console.log('✓ sunmi.print() called');
+        if ((window as any).sunmi.printText) {
+          (window as any).sunmi.printText(text);
+          console.log('✅ sunmi.printText() called');
+          return;
+        } else if ((window as any).sunmi.print) {
+          (window as any).sunmi.print({ text });
+          console.log('✅ sunmi.print() called');
+          return;
         }
-      } catch (e) {
-        console.error('✗ sunmi error:', e);
+      } catch (e: any) {
+        console.error('❌ sunmi error:', e);
       }
+    } else {
+      console.log('❌ sunmi not found');
     }
     
-    if (window.Android) {
-      console.log('Trying Android...');
+    if ((window as any).Android) {
+      console.log('✅ Found Android - trying...');
       try {
-        if (window.Android.printText) {
-          window.Android.printText(text, 24, 'left', false);
-          console.log('✓ Android.printText() called');
-        } else if (window.Android.print) {
-          window.Android.print(text);
-          console.log('✓ Android.print() called');
+        if ((window as any).Android.printText) {
+          (window as any).Android.printText(text, 24, 'left', false);
+          console.log('✅ Android.printText() called');
+          return;
+        } else if ((window as any).Android.print) {
+          (window as any).Android.print(text);
+          console.log('✅ Android.print() called');
+          return;
         }
-      } catch (e) {
-        console.error('✗ Android error:', e);
+      } catch (e: any) {
+        console.error('❌ Android error:', e);
       }
+    } else {
+      console.log('❌ Android not found');
     }
     
+    console.log('\n❌ ❌ ❌ NO PRINT METHODS WORKED ❌ ❌ ❌');
+    console.log('Check:');
+    console.log('1. Are you using native Android app (not browser)?');
+    console.log('2. Is printer service installed?');
+    console.log('3. Is printer enabled in device settings?');
     console.log('\n=== Print Test Complete ===');
     console.log('Check your printer for output');
   };
@@ -131,6 +181,10 @@ if (typeof window !== 'undefined') {
   // Run after a short delay to ensure page is loaded
   setTimeout(() => {
     debugSunmiPrinter();
+    // Ensure test function is set (override any cached version)
+    if ((window as any).testSunmiPrint) {
+      console.log('✅ Test function available: window.testSunmiPrint()');
+    }
   }, 1000);
 }
 

@@ -6,6 +6,7 @@ import { ShoppingCart, Package, Users, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { PercentageLoader } from "@/components/ui/percentage-loader"
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -17,24 +18,15 @@ export default function Home() {
     }
   }, [user, loading, router])
 
-  // Show loading while checking auth status
+  // Show percentage loading while checking auth status
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-        <p className="text-sm text-muted-foreground text-center">Connecting to server...</p>
-        <p className="text-xs text-muted-foreground text-center max-w-md">This should take less than 10 seconds. If it takes longer, check your internet connection.</p>
-        <button 
-          onClick={() => {
-            console.log('User clicked retry - reloading page');
-            window.location.reload();
-          }} 
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
-        >
-          Retry Connection
-        </button>
-        <p className="text-xs text-muted-foreground mt-2">Open browser console (F12) to see debug logs</p>
-      </div>
+      <PercentageLoader 
+        onComplete={() => {
+          // Loading animation complete - auth check should be done
+          console.log('Loading animation complete');
+        }} 
+      />
     )
   }
 
