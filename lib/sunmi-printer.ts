@@ -11,6 +11,13 @@ declare global {
     wm_print?: any; // Sunmi WebView print method
     SunmiPrinter?: any; // Sunmi Printer SDK
     Printer?: any; // Generic printer interface
+    Capacitor?: any; // Capacitor bridge
+    CapacitorWeb?: any; // Capacitor Web
+    // Sunmi V2 Pro specific APIs
+    wmPrinter?: any; // Sunmi Printer WebView API
+    sunmiPrinter?: any; // Sunmi Printer API
+    // ESC/POS commands
+    printRaw?: any; // Raw print command
   }
 }
 
@@ -53,17 +60,30 @@ export class SunmiPrinter {
     
     // Check for various Sunmi SDKs and print methods
     const availableSDKs = [];
+    if ((window as any).SunmiPrinterNative) availableSDKs.push('SunmiPrinterNative');
+    if (window.wm_print) availableSDKs.push('wm_print');
+    if (window.wmPrinter) availableSDKs.push('wmPrinter');
+    if (window.sunmiPrinter) availableSDKs.push('sunmiPrinter');
     if (window.wwise) availableSDKs.push('wwise');
     if (window.sunmi) availableSDKs.push('sunmi');
     if (window.Android) availableSDKs.push('Android');
-    if (window.wm_print) availableSDKs.push('wm_print');
     if (window.SunmiPrinter) availableSDKs.push('SunmiPrinter');
     if (window.Printer) availableSDKs.push('Printer');
+    if (window.Capacitor) availableSDKs.push('Capacitor');
+    if (window.printRaw) availableSDKs.push('printRaw');
     
     console.log('Sunmi Printer SDKs detected:', availableSDKs);
     console.log('User Agent:', navigator.userAgent);
+    console.log('Full window object keys:', Object.keys(window).filter(k => 
+      k.toLowerCase().includes('print') || 
+      k.toLowerCase().includes('sunmi') || 
+      k.toLowerCase().includes('wm') ||
+      k.toLowerCase().includes('printer')
+    ));
     
-    if (availableSDKs.length > 0) {
+    // For Sunmi devices, assume printer is available even if SDK not detected
+    // (SDK might be injected by WebView)
+    if (this.isSunmiDevice || availableSDKs.length > 0) {
       this.printerAvailable = true;
     }
   }
@@ -97,10 +117,39 @@ export class SunmiPrinter {
 
       console.log('Attempting to print with Sunmi printer:', text.substring(0, 50) + '...');
       
-      // Try Sunmi WebView print method (most common)
+      // Try Sunmi V2 Pro built-in printer methods (in order of likelihood)
+      // Method 1: SunmiPrinterNative (Injected via MainActivity)
+      if ((window as any).SunmiPrinterNative) {
+        console.log('Using SunmiPrinterNative method (injected from Android)');
+        await this.printWithSunmiPrinterNative(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+      
+      // Method 2: wmPrinter (Sunmi WebView Printer API)
+      if (window.wmPrinter) {
+        console.log('Using wmPrinter method');
+        await this.printWithWmPrinter(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+      
+      // Method 3: sunmiPrinter (Sunmi Printer API)
+      if (window.sunmiPrinter) {
+        console.log('Using sunmiPrinter method');
+        await this.printWithSunmiPrinterAPI(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+      
+      // Method 4: wm_print (Sunmi WebView print method)
       if (window.wm_print) {
         console.log('Using wm_print method');
         await this.printWithWmPrint(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+      
+      // Method 5: printRaw (ESC/POS raw printing)
+      if (window.printRaw) {
+        console.log('Using printRaw method');
+        await this.printWithRaw(text, { fontSize, align, bold, underline, lineSpacing });
         return true;
       }
 
@@ -237,6 +286,133 @@ export class SunmiPrinter {
       console.error('Error printing formatted receipt:', error);
       return false;
     }
+  }
+
+  private async printWithSunmiPrinterNative(text: string, options: PrintOptions): Promise<void> {
+    const native = (window as any).SunmiPrinterNative;
+    if (!native) return;
+    
+    try {
+      // Use injected native printer interface
+      if (native.printText) {
+        native.printText(text);
+      } else if (typeof native === 'function') {
+        native(text);
+      }
+      console.log('Print command sent via SunmiPrinterNative');
+    } catch (error) {
+      console.error('SunmiPrinterNative error:', error);
+      throw error;
+    }
+  }
+
+  private async printWithWmPrinter(text: string, options: PrintOptions): Promise<void> {
+    if (!window.wmPrinter) return;
+    
+    try {
+      // Sunmi V2 Pro WebView Printer API
+      if (window.wmPrinter.printText) {
+        window.wmPrinter.printText(text);
+      } else if (window.wmPrinter.print) {
+        window.wmPrinter.print(text);
+      } else if (typeof window.wmPrinter === 'function') {
+        window.wmPrinter(text);
+      } else if (window.wmPrinter.sendRawData) {
+        // ESC/POS mode
+        const escPosData = this.textToEscPos(text, options);
+        window.wmPrinter.sendRawData(escPosData);
+      }
+      console.log('Print command sent via wmPrinter');
+    } catch (error) {
+      console.error('wmPrinter error:', error);
+      throw error;
+    }
+  }
+
+  private async printWithSunmiPrinterAPI(text: string, options: PrintOptions): Promise<void> {
+    if (!window.sunmiPrinter) return;
+    
+    try {
+      // Sunmi Printer API
+      if (window.sunmiPrinter.printText) {
+        window.sunmiPrinter.printText(text);
+      } else if (window.sunmiPrinter.print) {
+        window.sunmiPrinter.print(text);
+      } else if (typeof window.sunmiPrinter === 'function') {
+        window.sunmiPrinter(text);
+      }
+      console.log('Print command sent via sunmiPrinter API');
+    } catch (error) {
+      console.error('sunmiPrinter API error:', error);
+      throw error;
+    }
+  }
+
+  private async printWithRaw(text: string, options: PrintOptions): Promise<void> {
+    if (!window.printRaw) return;
+    
+    try {
+      // ESC/POS raw printing
+      const escPosData = this.textToEscPos(text, options);
+      if (typeof window.printRaw === 'function') {
+        window.printRaw(escPosData);
+      } else if (window.printRaw.send) {
+        window.printRaw.send(escPosData);
+      }
+      console.log('Print command sent via printRaw');
+    } catch (error) {
+      console.error('printRaw error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Convert text to ESC/POS commands for thermal printer
+   */
+  private textToEscPos(text: string, options: PrintOptions): Uint8Array {
+    const ESC = 0x1B;
+    const GS = 0x1D;
+    const LF = 0x0A;
+    
+    let commands: number[] = [];
+    
+    // Initialize printer
+    commands.push(ESC, 0x40); // ESC @ - Initialize
+    
+    // Set alignment
+    if (options.align === 'center') {
+      commands.push(ESC, 0x61, 0x01); // ESC a 1 - Center
+    } else if (options.align === 'right') {
+      commands.push(ESC, 0x61, 0x02); // ESC a 2 - Right
+    } else {
+      commands.push(ESC, 0x61, 0x00); // ESC a 0 - Left
+    }
+    
+    // Set bold
+    if (options.bold) {
+      commands.push(ESC, 0x45, 0x01); // ESC E 1 - Bold on
+    }
+    
+    // Set font size
+    if (options.fontSize) {
+      const size = options.fontSize >= 28 ? 0x11 : 0x00; // Double width/height for large
+      commands.push(GS, 0x21, size);
+    }
+    
+    // Add text (convert to bytes)
+    const textBytes = new TextEncoder().encode(text);
+    commands.push(...Array.from(textBytes));
+    
+    // Reset formatting
+    commands.push(ESC, 0x45, 0x00); // Bold off
+    commands.push(ESC, 0x61, 0x00); // Left align
+    commands.push(GS, 0x21, 0x00); // Normal size
+    
+    // Line feed and cut
+    commands.push(LF, LF, LF); // 3 blank lines
+    commands.push(GS, 0x56, 0x00); // Partial cut
+    
+    return new Uint8Array(commands);
   }
 
   private async printWithWmPrint(text: string, options: PrintOptions): Promise<void> {
@@ -397,29 +573,32 @@ export async function printReceipt(html: string): Promise<boolean> {
   console.log('Printer available:', printer.isAvailable());
   
   // Always try Sunmi printing first if device is detected
-  if (printer.isAvailable()) {
-    console.log('Attempting Sunmi native printing...');
+  // Even if SDK not detected, try printing methods (SDK might be injected dynamically)
+  const isSunmiDevice = (printer as any).isSunmiDevice;
+  
+  if (isSunmiDevice) {
+    console.log('Sunmi device detected - attempting native printing...');
     try {
       const success = await printer.printReceipt(html);
       if (success) {
-        console.log('Sunmi printing successful');
+        console.log('✅ Sunmi printing successful - receipt sent to thermal printer');
         return true;
       } else {
-        console.warn('Sunmi printing returned false, falling back to browser print');
+        console.warn('⚠️ Sunmi printing returned false');
+        // Don't fall back to browser print on Sunmi - user expects automatic printing
+        throw new Error('Sunmi printer not responding. Please check printer connection and try again.');
       }
-    } catch (error) {
-      console.error('Sunmi printing error:', error);
+    } catch (error: any) {
+      console.error('❌ Sunmi printing error:', error);
+      // On Sunmi device, don't show browser print dialog
+      // Instead, show error message
+      throw new Error(error.message || 'Failed to print to Sunmi thermal printer. Please check printer connection.');
     }
   } else {
-    console.log('Sunmi printer not available, device detection:', {
-      isSunmiDevice: (printer as any).isSunmiDevice,
-      printerAvailable: (printer as any).printerAvailable
-    });
+    // Not a Sunmi device - use browser print
+    console.log('Not a Sunmi device - using browser print dialog');
+    await printer.printWithBrowser(html);
+    return false;
   }
-  
-  // Fallback to browser print
-  console.log('Falling back to browser print dialog');
-  await printer.printWithBrowser(html);
-  return false;
 }
 
