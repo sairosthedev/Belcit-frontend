@@ -20,10 +20,16 @@ export default function Home() {
   // Show loading while checking auth status
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-        <p className="text-sm text-muted-foreground">Connecting to server...</p>
-        <p className="text-xs text-muted-foreground">If this takes too long, check your internet connection</p>
+        <p className="text-sm text-muted-foreground text-center">Connecting to server...</p>
+        <p className="text-xs text-muted-foreground text-center max-w-md">If this takes too long, check your internet connection and ensure the backend is accessible</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+        >
+          Retry Connection
+        </button>
       </div>
     )
   }

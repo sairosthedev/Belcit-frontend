@@ -1,20 +1,19 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
-// IMPORTANT: Replace 'https://your-app.vercel.app' with your actual Vercel deployment URL
-// You can also set this via environment variable: NEXT_PUBLIC_DEPLOYED_URL
+// For production: Use your deployed Vercel URL
+// For testing: You can temporarily use a local server or ngrok
 const DEPLOYED_URL = process.env.NEXT_PUBLIC_DEPLOYED_URL || 'https://belcit-frontend.vercel.app';
 
 const config: CapacitorConfig = {
   appId: 'com.belcit.trading',
   appName: 'BELCIT Trading',
-  webDir: 'public', // Not used in server mode, but required by Capacitor
-  // Server mode: Loads your Next.js app from deployed URL
-  // This allows all Next.js features to work while providing native app experience
-  // The app will automatically load updates when you deploy to Vercel
+  webDir: 'public', // Required by Capacitor
+  // Server mode: App loads from remote URL
+  // Make sure this URL is accessible from your device
   server: {
     url: DEPLOYED_URL,
     androidScheme: 'https',
-    cleartext: false, // Set to true only if using http://
+    cleartext: false,
   },
   android: {
     allowMixedContent: true,
