@@ -28,11 +28,15 @@ export default function SalesHistoryPage() {
     if (user) fetchSales();
   }, [user]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
   // Print receipt with authentication and Sunmi support
   const printReceipt = async (saleId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+      // Normalize API base URL (remove trailing slash)
+      const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
+      const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
+      console.log('Fetching receipt from:', receiptUrl);
+      
+      const res = await fetch(receiptUrl, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'text/html',

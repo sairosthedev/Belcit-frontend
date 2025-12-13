@@ -42,11 +42,14 @@ export function RecentSales() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
-
   const printReceipt = async (saleId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+      // Normalize API base URL (remove trailing slash)
+      const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
+      const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
+      console.log('Fetching receipt from:', receiptUrl);
+      
+      const res = await fetch(receiptUrl, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'text/html',

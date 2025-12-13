@@ -255,12 +255,17 @@ export function POSSystem() {
     }
   };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
   // Print receipt for the last sale - with Sunmi support
   const printReceipt = async (saleId: string) => {
     try {
+      // Normalize API base URL (remove trailing slash)
+      const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
+      
       // Fetch the receipt HTML with authentication
-      const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {
+      const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
+      console.log('Fetching receipt from:', receiptUrl);
+      
+      const res = await fetch(receiptUrl, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'text/html',

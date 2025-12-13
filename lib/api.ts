@@ -18,7 +18,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const fullUrl = `${API_BASE}${path}`;
+  // Ensure path starts with / and API_BASE doesn't end with /
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const fullUrl = `${API_BASE}${normalizedPath}`;
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A';
   const isSunmi = typeof navigator !== 'undefined' && /sunmi/i.test(userAgent);
   
