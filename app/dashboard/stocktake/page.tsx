@@ -8,6 +8,8 @@ import { StocktakeHistory } from "@/components/stocktake/stocktake-history"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DashboardPageWrapper } from "@/components/dashboard/dashboard-page-wrapper"
+import { useTouch } from "@/contexts/touch-context"
 import { apiFetch } from "@/lib/api"
 
 export default function StocktakePage() {
@@ -44,14 +46,16 @@ export default function StocktakePage() {
     }
   }
 
+  const { isSmallScreen } = useTouch();
+  
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <header className={`flex ${isSmallScreen ? 'h-14' : 'h-16'} shrink-0 items-center gap-2 border-b ${isSmallScreen ? 'px-2' : 'px-4'}`}>
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-lg font-semibold">Stocktake</h1>
+        <h1 className={`${isSmallScreen ? 'text-base' : 'text-lg'} font-semibold`}>Stocktake</h1>
       </header>
-      <div className="flex flex-col gap-6 p-6">
+      <DashboardPageWrapper>
         <StocktakeHeader
           tab={tab}
           setTab={setTab}
@@ -122,7 +126,7 @@ export default function StocktakePage() {
             )}
           </div>
         )}
-      </div>
+      </DashboardPageWrapper>
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>

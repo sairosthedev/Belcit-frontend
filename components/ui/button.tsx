@@ -1,11 +1,14 @@
+"use client";
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { useTouch } from "@/contexts/touch-context"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 touch-manipulation",
   {
     variants: {
       variant: {
@@ -41,10 +44,25 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const touch = useTouch()
     const Comp = asChild ? Slot : "button"
+    
+    // Auto-adjust size for touch devices if not explicitly set
+    let adjustedSize = size
+    if (!size && (touch.isPOSDevice || touch.isTouchDevice)) {
+      adjustedSize = touch.buttonSize
+    }
+    if (size === "icon" && (touch.isPOSDevice || touch.isTouchDevice)) {
+      adjustedSize = touch.iconButtonSize
+    }
+    
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size: adjustedSize, className }),
+          touch.minTouchSize,
+          (touch.isPOSDevice || touch.isTouchDevice) && size === "icon" && "min-h-[44px] min-w-[44px]"
+        )}
         ref={ref}
         {...props}
       />

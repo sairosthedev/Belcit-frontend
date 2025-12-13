@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, History } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, History, Box } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,26 +15,44 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast as sonnerToast } from "sonner"
 
 function StockInModal({ open, onOpenChange, product, onStockIn }: { open: boolean, onOpenChange: (open: boolean) => void, product: any, onStockIn: (qty: number, notes: string) => void }) {
   const [qty, setQty] = useState(1)
   const [notes, setNotes] = useState("")
   return (
-    open ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-lg">
-          <h2 className="text-lg font-bold mb-2">Stock In: {product?.name}</h2>
-          <input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-2 w-full border rounded px-2 py-1" placeholder="Quantity" />
-          <input value={notes} onChange={e => setNotes(e.target.value)} className="mb-2 w-full border rounded px-2 py-1" placeholder="Notes (optional)" />
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={() => { onStockIn(qty, notes); onOpenChange(false); }}>Stock In</Button>
-          </div>
-        </div>
-      </div>
-    ) : null
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-background rounded-xl p-6 w-full max-w-sm shadow-2xl border-2"
+          >
+            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Stock In: {product?.name}
+            </h2>
+            <Input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-3 border-2" placeholder="Quantity" />
+            <Input value={notes} onChange={e => setNotes(e.target.value)} className="mb-4 border-2" placeholder="Notes (optional)" />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="border-2">Cancel</Button>
+              <Button onClick={() => { onStockIn(qty, notes); onOpenChange(false); }} className="bg-gradient-to-r from-purple-600 to-blue-600">Stock In</Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -42,19 +60,33 @@ function StockOutModal({ open, onOpenChange, product, onStockOut }: { open: bool
   const [qty, setQty] = useState(1)
   const [notes, setNotes] = useState("")
   return (
-    open ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-lg">
-          <h2 className="text-lg font-bold mb-2">Stock Out: {product?.name}</h2>
-          <input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-2 w-full border rounded px-2 py-1" placeholder="Quantity" />
-          <input value={notes} onChange={e => setNotes(e.target.value)} className="mb-2 w-full border rounded px-2 py-1" placeholder="Notes (optional)" />
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={() => { onStockOut(qty, notes); onOpenChange(false); }}>Stock Out</Button>
-          </div>
-        </div>
-      </div>
-    ) : null
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-background rounded-xl p-6 w-full max-w-sm shadow-2xl border-2"
+          >
+            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Stock Out: {product?.name}
+            </h2>
+            <Input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-3 border-2" placeholder="Quantity" />
+            <Input value={notes} onChange={e => setNotes(e.target.value)} className="mb-4 border-2" placeholder="Notes (optional)" />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="border-2">Cancel</Button>
+              <Button onClick={() => { onStockOut(qty, notes); onOpenChange(false); }} className="bg-gradient-to-r from-purple-600 to-blue-600">Stock Out</Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -65,19 +97,33 @@ function StockAdjustModal({ open, onOpenChange, product, onAdjust }: { open: boo
     setQty(product?.currentStock || 0)
   }, [product])
   return (
-    open ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-lg">
-          <h2 className="text-lg font-bold mb-2">Adjust Stock: {product?.name}</h2>
-          <input type="number" min={0} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-2 w-full border rounded px-2 py-1" placeholder="New Stock" />
-          <input value={notes} onChange={e => setNotes(e.target.value)} className="mb-2 w-full border rounded px-2 py-1" placeholder="Reason/Notes (optional)" />
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={() => { onAdjust(qty, notes); onOpenChange(false); }}>Adjust</Button>
-          </div>
-        </div>
-      </div>
-    ) : null
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-background rounded-xl p-6 w-full max-w-sm shadow-2xl border-2"
+          >
+            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Adjust Stock: {product?.name}
+            </h2>
+            <Input type="number" min={0} value={qty} onChange={e => setQty(Number(e.target.value))} className="mb-3 border-2" placeholder="New Stock" />
+            <Input value={notes} onChange={e => setNotes(e.target.value)} className="mb-4 border-2" placeholder="Reason/Notes (optional)" />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="border-2">Cancel</Button>
+              <Button onClick={() => { onAdjust(qty, notes); onOpenChange(false); }} className="bg-gradient-to-r from-purple-600 to-blue-600">Adjust</Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -102,8 +148,12 @@ export function InventoryTable() {
       .then(([products, cats]) => {
         setInventory(products)
         setCategories(cats)
+        sonnerToast.success("Inventory loaded", { duration: 1500 })
       })
-      .catch(err => setError(err.message))
+      .catch(err => {
+        setError(err.message)
+        sonnerToast.error("Failed to load inventory", { duration: 2000 })
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -121,10 +171,10 @@ export function InventoryTable() {
         method: "POST",
         body: JSON.stringify({ productId: product._id || product.id, quantity: qty, reason: notes }),
       })
-      toast({ title: `Stocked in ${qty} units of ${product.name}` })
+      sonnerToast.success(`Stocked in ${qty} units of ${product.name}`, { duration: 2000 })
       refreshProducts()
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" })
+      sonnerToast.error(err.message || "Stock in failed", { duration: 2000 })
     }
   }
 
@@ -134,10 +184,10 @@ export function InventoryTable() {
         method: "POST",
         body: JSON.stringify({ productId: product._id || product.id, quantity: qty, reason: notes }),
       })
-      toast({ title: `Stocked out ${qty} units of ${product.name}` })
+      sonnerToast.success(`Stocked out ${qty} units of ${product.name}`, { duration: 2000 })
       refreshProducts()
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" })
+      sonnerToast.error(err.message || "Stock out failed", { duration: 2000 })
     }
   }
 
@@ -147,10 +197,10 @@ export function InventoryTable() {
         method: "POST",
         body: JSON.stringify({ productId: product._id || product.id, quantity: qty, reason: notes }),
       })
-      toast({ title: `Stock adjusted to ${qty} units for ${product.name}` })
+      sonnerToast.success(`Stock adjusted to ${qty} units for ${product.name}`, { duration: 2000 })
       refreshProducts()
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" })
+      sonnerToast.error(err.message || "Adjustment failed", { duration: 2000 })
     }
   }
 
@@ -169,135 +219,168 @@ export function InventoryTable() {
       item.stock === 0
         ? "Out of Stock"
         : item.stock <= (item.minStock || 0)
-        ? "Low Stock"
-        : "In Stock",
+          ? "Low Stock"
+          : "In Stock",
     lastUpdated: item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "",
   }))
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading inventory...</div>
-  if (error) return <div className="p-8 text-center text-destructive">{error}</div>
+  if (loading) {
+    return (
+      <Card className="border-2">
+        <CardContent className="p-6">
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="border-2 border-red-500/30">
+        <CardContent className="p-8 text-center">
+          <p className="text-red-600 mb-4">⚠️ {error}</p>
+          <Button onClick={refreshProducts} variant="outline">Retry</Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex flex-1 items-center space-x-2">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat._id} value={cat.name}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select defaultValue="all">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="low-stock">Low Stock</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-              </SelectContent>
-            </Select>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="border-2 hover:border-primary/30 transition-all duration-300 shadow-xl bg-gradient-to-br from-background via-background to-primary/5">
+        <CardContent className="p-0">
+          <div className="flex items-center justify-between p-4 border-b-2 border-primary/10">
+            <div className="flex flex-1 items-center space-x-2">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px] border-2">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat._id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Select defaultValue="20">
-              <SelectTrigger className="w-[80px]">
-                <SelectValue placeholder="20" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-2">
+                  <TableHead className="font-bold">
+                    <Button variant="ghost" className="p-0 hover:bg-transparent font-bold">
+                      Product Name
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="font-bold">SKU</TableHead>
+                  <TableHead className="font-bold">Category</TableHead>
+                  <TableHead className="font-bold">Current Stock</TableHead>
+                  <TableHead className="font-bold">Reorder Level</TableHead>
+                  <TableHead className="font-bold">Status</TableHead>
+                  <TableHead className="font-bold">Last Updated</TableHead>
+                  <TableHead className="text-right font-bold">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence mode="popLayout">
+                  {mappedInventory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-12">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <Box className="mx-auto h-12 w-12 text-muted-foreground/50 mb-3" />
+                          <p className="text-lg font-semibold text-muted-foreground">No inventory items</p>
+                          <p className="text-sm text-muted-foreground mt-1">Stock will appear here as products are added</p>
+                        </motion.div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    mappedInventory.map((item, idx) => (
+                      <motion.tr
+                        key={item._id || item.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="border-b hover:bg-primary/5 transition-colors"
+                      >
+                        <TableCell className="font-semibold">{item.name}</TableCell>
+                        <TableCell className="font-mono text-sm text-muted-foreground">{item.sku}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-primary/10 rounded-md text-xs font-medium">
+                            {item.category}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`font-bold ${item.currentStock < 10 ? 'text-red-500' : 'text-green-600'}`}>
+                            {item.currentStock}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{item.reorderLevel}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              item.status === "In Stock" ? "default" : item.status === "Low Stock" ? "outline" : "destructive"
+                            }
+                            className="font-semibold"
+                          >
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{item.lastUpdated}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border-2">
+                              <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setStockInProduct(item)} className="cursor-pointer">
+                                <ArrowUp className="mr-2 h-4 w-4 text-green-500" />
+                                Stock In
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setStockOutProduct(item)} className="cursor-pointer">
+                                <ArrowDown className="mr-2 h-4 w-4 text-orange-500" />
+                                Stock Out
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setStockAdjustProduct(item)} className="cursor-pointer">
+                                <ArrowUpDown className="mr-2 h-4 w-4" />
+                                Adjust Stock
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="cursor-pointer">
+                                <History className="mr-2 h-4 w-4" />
+                                View History
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </motion.tr>
+                    ))
+                  )}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
           </div>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button variant="ghost" className="p-0 hover:bg-transparent">
-                  Product Name
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Current Stock</TableHead>
-              <TableHead>Reorder Level</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Updated</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mappedInventory.map((item) => (
-              <TableRow key={item._id || item.id}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.sku}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{item.currentStock}</TableCell>
-                <TableCell>{item.reorderLevel}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      item.status === "In Stock" ? "default" : item.status === "Low Stock" ? "outline" : "destructive"
-                    }
-                  >
-                    {item.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{item.lastUpdated}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setStockInProduct(item)}>
-                        <ArrowUp className="mr-2 h-4 w-4" />
-                        Stock In
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setStockOutProduct(item)}>
-                        <ArrowDown className="mr-2 h-4 w-4" />
-                        Stock Out
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setStockAdjustProduct(item)}>
-                        <ArrowUpDown className="mr-2 h-4 w-4" />
-                        Adjust Stock
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <History className="mr-2 h-4 w-4" />
-                        View History
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-end space-x-2 p-4">
-          <Button variant="outline" size="sm">
-            Previous
-          </Button>
-          <Button variant="outline" size="sm">
-            Next
-          </Button>
-        </div>
-      </CardContent>
+        </CardContent>
+      </Card>
+
       <StockInModal
         open={!!stockInProduct}
         onOpenChange={open => !open && setStockInProduct(null)}
@@ -316,89 +399,6 @@ export function InventoryTable() {
         product={stockAdjustProduct}
         onAdjust={(qty, notes) => handleStockAdjust(stockAdjustProduct, qty, notes)}
       />
-    </Card>
+    </motion.div>
   )
 }
-
-const inventoryData = [
-  {
-    id: 1,
-    name: "Fresh Milk 1L",
-    sku: "DRY-1001",
-    category: "Dairy",
-    currentStock: 45,
-    reorderLevel: 20,
-    status: "In Stock",
-    lastUpdated: "2023-07-05",
-  },
-  {
-    id: 2,
-    name: "Whole Wheat Bread",
-    sku: "BKY-2034",
-    category: "Bakery",
-    currentStock: 28,
-    reorderLevel: 15,
-    status: "In Stock",
-    lastUpdated: "2023-07-06",
-  },
-  {
-    id: 3,
-    name: "Organic Eggs (12pk)",
-    sku: "DRY-1087",
-    category: "Dairy",
-    currentStock: 12,
-    reorderLevel: 10,
-    status: "Low Stock",
-    lastUpdated: "2023-07-06",
-  },
-  {
-    id: 4,
-    name: "Premium Coffee Beans",
-    sku: "BEV-3045",
-    category: "Beverages",
-    currentStock: 8,
-    reorderLevel: 10,
-    status: "Low Stock",
-    lastUpdated: "2023-07-04",
-  },
-  {
-    id: 5,
-    name: "Chicken Breast (1kg)",
-    sku: "MET-4023",
-    category: "Meat & Poultry",
-    currentStock: 15,
-    reorderLevel: 12,
-    status: "In Stock",
-    lastUpdated: "2023-07-07",
-  },
-  {
-    id: 6,
-    name: "Organic Bananas (1kg)",
-    sku: "PRD-5012",
-    category: "Produce",
-    currentStock: 50,
-    reorderLevel: 25,
-    status: "In Stock",
-    lastUpdated: "2023-07-07",
-  },
-  {
-    id: 7,
-    name: "Chocolate Chip Cookies",
-    sku: "BKY-2089",
-    category: "Bakery",
-    currentStock: 0,
-    reorderLevel: 15,
-    status: "Out of Stock",
-    lastUpdated: "2023-07-03",
-  },
-  {
-    id: 8,
-    name: "Coca Cola 2L",
-    sku: "BEV-3078",
-    category: "Beverages",
-    currentStock: 60,
-    reorderLevel: 30,
-    status: "In Stock",
-    lastUpdated: "2023-07-05",
-  },
-]

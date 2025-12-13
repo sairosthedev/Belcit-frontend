@@ -1,27 +1,36 @@
 "use client";
 
 import type React from "react"
+import { useEffect, useState } from "react"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { MandatoryCheckinModal } from "@/components/attendance/mandatory-checkin-modal"
 import { MandatoryCheckoutModal } from "@/components/attendance/mandatory-checkout-modal"
 import { useAuth } from "@/hooks/use-auth"
+import { useTouch } from "@/contexts/touch-context"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { 
-    user, 
-    isCheckedIn, 
-    showCheckinModal, 
-    showCheckoutModal, 
-    handleCheckIn, 
-    handleCheckOut, 
-    handleCheckOutAndLogout,
-    setShowCheckoutModal 
-  } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const authContext = useAuth() as any;
+  const { isSmallScreen } = useTouch();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Provide default values if auth context is not available
+  const user = authContext?.user ?? null;
+  const isCheckedIn = authContext?.isCheckedIn ?? false;
+  const showCheckinModal = authContext?.showCheckinModal ?? false;
+  const showCheckoutModal = authContext?.showCheckoutModal ?? false;
+  const handleCheckIn = authContext?.handleCheckIn ?? (() => {});
+  const handleCheckOut = authContext?.handleCheckOut ?? (() => {});
+  const handleCheckOutAndLogout = authContext?.handleCheckOutAndLogout ?? (() => {});
+  const setShowCheckoutModal = authContext?.setShowCheckoutModal ?? ((value: boolean) => {});
 
   console.log('DashboardLayout render - isCheckedIn:', isCheckedIn, 'showCheckinModal:', showCheckinModal);
 
@@ -29,30 +38,37 @@ export default function DashboardLayout({
     <SidebarProvider>
       <DashboardSidebar />
       <SidebarInset>
-        {/* Block access if not checked in and modal is showing */}
-        {!isCheckedIn && showCheckinModal ? (
-          <div className="pointer-events-none opacity-50">
-            {children}
+        {/* Always render children to maintain layout router structure */}
+        <div 
+          className={`${!mounted || (!isCheckedIn && showCheckinModal) ? "pointer-events-none opacity-50" : ""} ${isSmallScreen ? "p-2" : "p-4 md:p-6"}`}
+        >
+          {children}
+        </div>
+        {!mounted && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
+            <div className="text-sm text-muted-foreground">Loading...</div>
           </div>
-        ) : (
-          children
         )}
       </SidebarInset>
       
       {/* Mandatory Check-in Modal */}
-      <MandatoryCheckinModal
-        user={user}
-        onCheckIn={handleCheckIn}
-        isOpen={showCheckinModal}
-      />
-      
-      {/* Mandatory Check-out Modal */}
-      <MandatoryCheckoutModal
-        user={user}
-        onCheckOut={handleCheckOutAndLogout}
-        onCancel={() => setShowCheckoutModal(false)}
-        isOpen={showCheckoutModal}
-      />
+      {mounted && (
+        <>
+          <MandatoryCheckinModal
+            user={user}
+            onCheckIn={handleCheckIn}
+            isOpen={showCheckinModal}
+          />
+          
+          {/* Mandatory Check-out Modal */}
+          <MandatoryCheckoutModal
+            user={user}
+            onCheckOut={handleCheckOutAndLogout}
+            onCancel={() => setShowCheckoutModal(false)}
+            isOpen={showCheckoutModal}
+          />
+        </>
+      )}
     </SidebarProvider>
   )
 }

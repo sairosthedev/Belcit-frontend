@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Box, ClipboardList, Clock, DollarSign, Home, Package, ShoppingCart, Truck, LogOut } from "lucide-react"
+import { BarChart3, Box, ClipboardList, Clock, DollarSign, Home, Package, ShoppingCart, Truck, LogOut, Sparkles } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { CheckinStatusIndicator } from "@/components/attendance/checkin-status-indicator";
+import { motion } from "framer-motion"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -38,7 +39,6 @@ export function DashboardSidebar() {
   const handleLogout = async () => {
     if (logout) {
       await logout();
-      // Router push will be handled by the auth context
     }
   };
 
@@ -49,129 +49,137 @@ export function DashboardSidebar() {
   const isStockClerk = user && user.role === "stockClerk";
   const isCashier = user && user.role === "cashier";
 
-  // Dashboard: all roles
-  // Products: manager, stockClerk, admin, superAdmin
-  // Inventory: manager, stockClerk, admin, superAdmin
-  // Sales: cashier, manager, admin, superAdmin
-  // Purchases/Expenses: manager, admin, superAdmin
-  // Reports: manager, admin, superAdmin
-  // Stocktake: stockClerk, manager, admin, superAdmin
+  const menuItems = [
+    {
+      path: "/dashboard",
+      icon: Home,
+      label: "Dashboard",
+      show: true
+    },
+    {
+      path: "/dashboard/products",
+      icon: Package,
+      label: "Products",
+      show: isManager || isStockClerk || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/inventory",
+      icon: Box,
+      label: "Inventory",
+      show: isManager || isStockClerk || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/sales",
+      icon: ShoppingCart,
+      label: "Sales (POS)",
+      show: isCashier || isManager || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/purchases",
+      icon: Truck,
+      label: "Purchases",
+      show: isManager || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/expenses",
+      icon: DollarSign,
+      label: "Expenses",
+      show: isManager || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/reports",
+      icon: BarChart3,
+      label: "Reports",
+      show: isManager || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/stocktake",
+      icon: ClipboardList,
+      label: "Stocktake",
+      show: isStockClerk || isManager || isAdmin || isSuperAdmin
+    },
+    {
+      path: "/dashboard/attendance",
+      icon: Clock,
+      label: "Attendance",
+      show: isCashier || isManager || isStockClerk || isAdmin || isSuperAdmin
+    }
+  ];
 
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <Box className="h-6 w-6" />
-          <span className="text-lg font-bold">BELCIT TRADING</span>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-2 px-2"
+        >
+          <motion.div
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 5 }}
+          >
+            <Box className="h-6 w-6 text-primary" />
+          </motion.div>
+          <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            BELCIT TRADING
+          </span>
+          <Sparkles className="h-4 w-4 text-yellow-500 ml-auto" />
+        </motion.div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
-                  <Link href="/dashboard">
-                    <Home />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {(isManager || isStockClerk || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/products")}>
-                  <Link href="/dashboard/products">
-                    <Package />
-                    <span>Products</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isManager || isStockClerk || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/inventory")}>
-                  <Link href="/dashboard/inventory">
-                    <Box />
-                    <span>Inventory</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isCashier || isManager || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/sales")}>
-                  <Link href="/dashboard/sales">
-                    <ShoppingCart />
-                    <span>Sales (POS)</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isManager || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/purchases")}>
-                  <Link href="/dashboard/purchases">
-                    <Truck />
-                    <span>Purchases</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isManager || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/expenses")}>
-                  <Link href="/dashboard/expenses">
-                    <DollarSign />
-                    <span>Expenses</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isManager || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/reports")}>
-                  <Link href="/dashboard/reports">
-                    <BarChart3 />
-                    <span>Reports</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isStockClerk || isManager || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/stocktake")}>
-                  <Link href="/dashboard/stocktake">
-                    <ClipboardList />
-                    <span>Stocktake</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
-              {(isCashier || isManager || isStockClerk || isAdmin || isSuperAdmin) && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/attendance")}>
-                  <Link href="/dashboard/attendance">
-                    <Clock />
-                    <span>Attendance</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
+              {menuItems.map((item, index) => (
+                item.show && (
+                  <motion.div
+                    key={item.path}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.path)}
+                        className="transition-all duration-200 hover:bg-primary/10 data-[active=true]:bg-gradient-to-r data-[active=true]:from-purple-600 data-[active=true]:to-blue-600 data-[active=true]:text-white"
+                      >
+                        <Link href={item.path}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="font-medium">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </motion.div>
+                )
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center justify-between p-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center justify-between p-2 border-t-2 border-primary/10"
+        >
           <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={user?.picture || "/placeholder.svg?height=32&width=32"} alt="User" />
-              <AvatarFallback>{user ? (user.firstName?.[0] || "") + (user.lastName?.[0] || "") : "?"}</AvatarFallback>
-            </Avatar>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Avatar className="border-2 border-primary/20">
+                <AvatarImage src={user?.picture || "/placeholder.svg?height=32&width=32"} alt="User" />
+                <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold">
+                  {user ? (user.firstName?.[0] || "") + (user.lastName?.[0] || "") : "?"}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : "Guest"}</p>
-              <p className="text-xs text-muted-foreground">{user ? user.role : "Role"}</p>
+              <p className="text-sm font-semibold">{user ? `${user.firstName} ${user.lastName}` : "Guest"}</p>
+              <p className="text-xs text-muted-foreground font-medium">{user ? user.role : "Role"}</p>
               <div className="mt-1">
                 <CheckinStatusIndicator isCheckedIn={isCheckedIn} />
               </div>
@@ -179,11 +187,23 @@ export function DashboardSidebar() {
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
-            <Button variant="ghost" size="icon" title="Logout" onClick={handleLogout} disabled={!logout}>
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Logout"
+                onClick={handleLogout}
+                disabled={!logout}
+                className="hover:bg-red-500/10 hover:text-red-500 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </SidebarFooter>
     </Sidebar>
   )

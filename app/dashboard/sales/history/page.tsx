@@ -28,7 +28,7 @@ export default function SalesHistoryPage() {
     if (user) fetchSales();
   }, [user]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com";
   // Print receipt with authentication
   const printReceipt = async (saleId: string) => {
     const res = await fetch(`${API_BASE}/api/sales/${saleId}/receipt`, {

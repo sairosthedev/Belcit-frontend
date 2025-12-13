@@ -9,6 +9,8 @@ import { AttendanceTable } from "@/components/attendance/attendance-table";
 import { LiveTimer } from "@/components/attendance/live-timer";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardPageWrapper } from "@/components/dashboard/dashboard-page-wrapper";
+import { useTouch } from "@/contexts/touch-context";
 import { ShieldAlert } from "lucide-react";
 
 export default function AttendancePage() {
@@ -17,6 +19,7 @@ export default function AttendancePage() {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [checkLoading, setCheckLoading] = useState(false);
+  const { isSmallScreen } = useTouch();
   
   // Check user role
   const isAdmin = user?.role === "admin" || user?.role === "superAdmin";
@@ -106,9 +109,9 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <DashboardPageWrapper>
       <div className="mb-4">
-        <h1 className="text-3xl font-bold">
+        <h1 className={`${isSmallScreen ? 'text-2xl' : 'text-3xl'} font-bold`}>
           {isAdmin ? "Attendance Audit Trail" : "My Attendance"}
         </h1>
         <p className="text-muted-foreground">
@@ -129,6 +132,6 @@ export default function AttendancePage() {
         loading={checkLoading}
       />
       <AttendanceTable records={records} loading={loading} isAdmin={isAdmin} />
-    </div>
+    </DashboardPageWrapper>
   );
 }

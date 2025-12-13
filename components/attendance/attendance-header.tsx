@@ -36,3 +36,4 @@ export function AttendanceHeader({ onCheckIn, onCheckOut, isCheckedIn, loading }
   );
 }
 
+

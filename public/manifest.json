@@ -1,0 +1,43 @@
+{
+  "name": "BELCIT TRADING - Management System",
+  "short_name": "BELCIT",
+  "description": "Point of Sale and Management System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/BT.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/BT.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "POS System",
+      "short_name": "POS",
+      "description": "Open Point of Sale",
+      "url": "/dashboard/sales",
+      "icons": [{ "src": "/BT.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/BT.png", "sizes": "96x96" }]
+    }
+  ]
+}
+

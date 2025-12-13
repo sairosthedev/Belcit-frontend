@@ -30,6 +30,7 @@ import CashierDashboard from '@/components/dashboard/CashierDashboard';
 // Auth & Role Components
 import RequireRole from "@/components/RequireRole";
 import { useAuth } from '@/hooks/use-auth';
+import { useTouch } from '@/contexts/touch-context';
 
 // API
 import { apiFetch } from "@/lib/api";
@@ -220,17 +221,20 @@ const RecentActivityTable = ({
 
 // Admin Dashboard Component
 const AdminDashboard = () => {
-  const { user } = useAuth() as { user: User };
+  const auth = useAuth() as any;
+  const user = auth?.user as User;
   const welcomeMsg = `Welcome back, ${user.firstName}! Here's an overview of your store.`;
+  const { isSmallScreen } = useTouch();
+  
     return (
       <RequireRole roles={['superAdmin', 'manager', 'admin']}>
         <div className="flex flex-1 flex-col">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <header className={`flex ${isSmallScreen ? 'h-14' : 'h-16'} shrink-0 items-center gap-2 border-b ${isSmallScreen ? 'px-2' : 'px-4'}`}>
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <h1 className={`${isSmallScreen ? 'text-base' : 'text-lg'} font-semibold`}>Dashboard</h1>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className={`flex flex-1 flex-col gap-4 ${isSmallScreen ? 'p-2' : 'p-4'}`}>
           <DashboardHeader subtitle={welcomeMsg} />
             <DashboardCards />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -258,7 +262,8 @@ const UnauthorizedAccess = () => (
 
 // Main Dashboard Component
 export default function DashboardPage() {
-  const { user } = useAuth() as { user: User };
+  const auth = useAuth() as any;
+  const user = auth?.user as User;
   const router = useRouter();
 
   // Role-based dashboard rendering

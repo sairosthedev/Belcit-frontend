@@ -92,3 +92,30 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* POS Device and Touch Optimizations */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Larger touch targets for POS devices */
+  @media (max-width: 1024px) {
+    button, a, input, select {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+  
+  /* Prevent text selection on buttons for better touch experience */
+  button {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Optimize scrolling for touch devices */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
