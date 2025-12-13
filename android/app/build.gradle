@@ -40,6 +40,10 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    
+    // Sunmi Printer SDK - Add the SDK JAR file to android/app/libs/ directory
+    // Download from: https://developer.sunmi.com/docs/en-US/doc/printer-sdk-en
+    implementation fileTree(include: ['*.aar', '*.jar'], dir: 'libs')
 }
 
 apply from: 'capacitor.build.gradle'

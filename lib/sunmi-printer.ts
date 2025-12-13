@@ -145,11 +145,36 @@ export class SunmiPrinter {
       console.log('Attempting to print with Sunmi printer:', text.substring(0, 50) + '...');
       
       // Try Sunmi V2 Pro built-in printer methods (in order of likelihood)
-      // Method 1: SunmiPrinterNative (Injected via MainActivity)
+      // Method 1: SunmiPrinterNative (Injected via MainActivity) - Try direct call first
       if ((window as any).SunmiPrinterNative) {
-        console.log('Using SunmiPrinterNative method (injected from Android)');
-        await this.printWithSunmiPrinterNative(text, { fontSize, align, bold, underline, lineSpacing });
-        return true;
+        console.log('✅ Found SunmiPrinterNative - calling printText directly');
+        try {
+          if (typeof (window as any).SunmiPrinterNative.printText === 'function') {
+            (window as any).SunmiPrinterNative.printText(text);
+            console.log('✅ SunmiPrinterNative.printText called successfully');
+            return true;
+          } else {
+            // Try as function
+            (window as any).SunmiPrinterNative(text);
+            console.log('✅ SunmiPrinterNative called as function');
+            return true;
+          }
+        } catch (e) {
+          console.error('SunmiPrinterNative direct call failed:', e);
+          // Fall through to try other methods
+        }
+      }
+      
+      // Method 1b: Try wm_print directly (most common Sunmi method)
+      if (typeof (window as any).wm_print === 'function') {
+        console.log('✅ Found wm_print - calling directly');
+        try {
+          (window as any).wm_print(text);
+          console.log('✅ wm_print called successfully');
+          return true;
+        } catch (e) {
+          console.error('wm_print direct call failed:', e);
+        }
       }
       
       // Method 2: wmPrinter (Sunmi WebView Printer API)
@@ -220,26 +245,34 @@ export class SunmiPrinter {
       if (this._isSunmiDevice) {
         console.warn('⚠️ No SDK detected, but trying direct print calls anyway...');
         
+        // Try calling SunmiPrinterNative directly (injected from Android)
+        try {
+          if ((window as any).SunmiPrinterNative) {
+            console.log('✅ Found SunmiPrinterNative - trying direct call');
+            if (typeof (window as any).SunmiPrinterNative.printText === 'function') {
+              (window as any).SunmiPrinterNative.printText(text);
+              console.log('✅ SunmiPrinterNative.printText called');
+              return true;
+            } else if (typeof (window as any).SunmiPrinterNative === 'function') {
+              (window as any).SunmiPrinterNative(text);
+              console.log('✅ SunmiPrinterNative called as function');
+              return true;
+            }
+          }
+        } catch (e) {
+          console.error('Direct SunmiPrinterNative call failed:', e);
+        }
+        
         // Try calling wm_print directly (most common Sunmi method)
         try {
           if (typeof (window as any).wm_print === 'function') {
-            console.log('Trying direct wm_print call');
+            console.log('✅ Found wm_print - trying direct call');
             (window as any).wm_print(text);
+            console.log('✅ wm_print called');
             return true;
           }
         } catch (e) {
-          console.warn('Direct wm_print call failed:', e);
-        }
-        
-        // Try SunmiPrinterNative directly
-        try {
-          if ((window as any).SunmiPrinterNative && typeof (window as any).SunmiPrinterNative.printText === 'function') {
-            console.log('Trying direct SunmiPrinterNative call');
-            (window as any).SunmiPrinterNative.printText(text, fontSize, align || 'left', bold || false);
-            return true;
-          }
-        } catch (e) {
-          console.warn('Direct SunmiPrinterNative call failed:', e);
+          console.error('Direct wm_print call failed:', e);
         }
         
         console.error('❌ Sunmi device detected but no printer SDK found');
@@ -248,6 +281,8 @@ export class SunmiPrinter {
           k.toLowerCase().includes('sunmi') || 
           k.toLowerCase().includes('wm')
         ));
+        console.error('Window.SunmiPrinterNative:', (window as any).SunmiPrinterNative);
+        console.error('Window.wm_print:', (window as any).wm_print);
         // Don't throw error - return false so caller can handle it
         // The exported function will handle the error appropriately
         return false;
