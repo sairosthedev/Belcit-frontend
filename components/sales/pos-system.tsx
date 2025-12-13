@@ -232,6 +232,16 @@ export function POSSystem() {
       });
 
       setSuccessMsg("Sale and payment completed successfully!");
+      
+      // Auto-print receipt after successful sale
+      try {
+        await printReceipt(sale._id);
+      } catch (printErr) {
+        console.error('Auto-print failed:', printErr);
+        // Don't fail the sale if printing fails
+        toast.error('Receipt printing failed, but sale was successful', { duration: 2000 });
+      }
+      
       setCartItems([]);
       setAmountReceived(0);
       setChange(0);
@@ -279,12 +289,12 @@ export function POSSystem() {
   const touchPadding = isPOSDevice || isTouchDevice ? "p-2" : "p-1";
 
   return (
-    <div className={`grid grid-cols-1 gap-${isSmallScreen ? '4' : '6'} lg:grid-cols-3 ${isSmallScreen ? 'p-2' : 'p-4 md:p-8'} relative`}>
+    <div className={`grid grid-cols-1 ${isSmallScreen ? 'gap-3 p-2' : 'gap-4 md:gap-6 p-3 md:p-4 lg:p-6'} lg:grid-cols-3 relative w-full max-w-full overflow-x-hidden`}>
       {/* Premium gradient background overlay */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
 
       {/* Left/Main Column: Product Scanner, Quick Add, and Cart Table */}
-      <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className={`lg:col-span-2 flex flex-col ${isSmallScreen ? 'gap-3' : 'gap-4 md:gap-6'} w-full max-w-full overflow-x-hidden`}>
         {/* Responsive header: stack on mobile, row on desktop */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -587,6 +597,7 @@ export function POSSystem() {
       {/* Right/Sidebar: Order Summary with premium styling */}
       <motion.div
         initial={{ opacity: 0, x: 20 }}
+        className={`flex flex-col ${isSmallScreen ? 'gap-3' : 'gap-4 md:gap-6'} w-full max-w-full overflow-x-hidden`}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
         className="lg:col-span-1 flex flex-col gap-6"

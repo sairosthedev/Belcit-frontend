@@ -40,7 +40,7 @@ export default function DashboardLayout({
       <SidebarInset>
         {/* Always render children to maintain layout router structure */}
         <div 
-          className={`${!mounted || (!isCheckedIn && showCheckinModal) ? "pointer-events-none opacity-50" : ""} ${isSmallScreen ? "p-2" : "p-4 md:p-6"}`}
+          className={`${!mounted || (!isCheckedIn && showCheckinModal) ? "pointer-events-none opacity-50" : ""} ${isSmallScreen ? "p-2" : "p-3 md:p-4 lg:p-6"} w-full max-w-full overflow-x-hidden`}
         >
             {children}
         </div>

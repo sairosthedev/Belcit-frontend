@@ -136,24 +136,50 @@ body {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Mobile responsive improvements */
+  /* Full viewport height for app-like experience */
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    position: fixed;
+    overscroll-behavior: none;
+  }
+  
+  #__next {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  /* Mobile responsive improvements - App-like experience */
   @media (max-width: 640px) {
     /* Ensure text is readable on small screens */
-    body {
+    html {
       font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    body {
+      font-size: 14px;
+      overflow-x: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
     }
     
     /* Better spacing on mobile */
     .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      max-width: 100%;
     }
     
     /* Touch-friendly buttons */
     button, a[role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-      padding: 0.75rem 1rem;
+      min-height: 48px;
+      min-width: 48px;
+      padding: 0.875rem 1rem;
+      font-size: 16px;
     }
     
     /* Better table scrolling on mobile */
@@ -161,19 +187,65 @@ body {
       display: block;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      width: 100%;
     }
     
     /* Prevent horizontal scroll */
-    body {
-      overflow-x: hidden;
+    * {
+      max-width: 100%;
+    }
+    
+    /* Full width cards on mobile */
+    .card, [class*="Card"] {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    /* Better grid layouts */
+    .grid {
+      gap: 0.75rem;
     }
   }
   
   /* Tablet and small desktop */
   @media (min-width: 641px) and (max-width: 1024px) {
     .container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    body {
+      font-size: 15px;
+    }
+  }
+  
+  /* Sunmi POS specific optimizations */
+  @media (max-width: 800px) and (orientation: portrait) {
+    /* Optimize for POS portrait mode */
+    body {
+      font-size: 15px;
+    }
+    
+    button {
+      min-height: 50px;
+      font-size: 16px;
+      padding: 1rem;
+    }
+    
+    input, select {
+      min-height: 50px;
+      font-size: 16px;
+      padding: 0.75rem;
+    }
+    
+    /* Better spacing for POS */
+    .gap-6 {
+      gap: 1rem;
+    }
+    
+    .p-6 {
+      padding: 1rem;
     }
   }
 }
