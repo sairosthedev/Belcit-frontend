@@ -10,6 +10,8 @@ import { apiFetch } from '@/lib/api';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { usePOSDevice } from '@/hooks/use-pos-device';
+import { getGradientTextClass } from '@/lib/gradient-utils';
 
 interface User {
   id?: string;
@@ -58,7 +60,7 @@ const StatCard = ({ title, value, description, icon: Icon, iconColor, loading = 
           </CardHeader>
           <CardContent>
             <motion.div
-              className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
+              className={getGradientTextClass(isPOSDevice, 'xl')}
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
@@ -251,6 +253,7 @@ const RecentSalesTable = ({ sales, loading, page, setPage, totalPages, search, s
 const CashierDashboard = ({ user }: { user: User }) => {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const { isPOSDevice } = usePOSDevice();
   const debouncedSearch = useDebouncedValue(search, 300);
   const [page, setPage] = useState(1);
 
@@ -330,7 +333,7 @@ const CashierDashboard = ({ user }: { user: User }) => {
         <SidebarTrigger className="-ml-1" />
         <div className="flex-1">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <span className={getGradientTextClass(isPOSDevice, 'lg')}>
               Welcome, {user.firstName}!
             </span>
             <Sparkles className="h-5 w-5 text-yellow-500" />

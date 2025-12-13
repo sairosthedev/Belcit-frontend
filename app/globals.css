@@ -6,6 +6,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Fallback for devices that don't support CSS gradients (like older Sunmi browsers) */
+@supports not (background-clip: text) {
+  .bg-clip-text {
+    background: none !important;
+    color: #2563eb !important; /* Fallback to blue-600 */
+  }
+}
+
+/* Additional fallback for Sunmi devices */
+@media screen {
+  /* Detect if gradient is not supported and use solid color */
+  .gradient-text-fallback {
+    background: none !important;
+    color: #2563eb !important;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

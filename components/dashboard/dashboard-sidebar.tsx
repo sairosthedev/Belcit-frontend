@@ -22,6 +22,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { CheckinStatusIndicator } from "@/components/attendance/checkin-status-indicator";
 import { motion } from "framer-motion"
+import { usePOSDevice } from "@/hooks/use-pos-device"
+import { getGradientTextClass, getGradientBgClass } from "@/lib/gradient-utils"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -35,6 +37,10 @@ export function DashboardSidebar() {
   const logout = auth?.logout;
   const isCheckedIn = auth?.isCheckedIn;
   const router = useRouter();
+  const { isPOSDevice } = usePOSDevice();
+  
+  // Sunmi devices may not support CSS gradients properly, use solid color fallback
+  const brandTextClass = getGradientTextClass(isPOSDevice, 'lg');
 
   const handleLogout = async () => {
     if (logout) {
@@ -120,7 +126,7 @@ export function DashboardSidebar() {
           >
             <Box className="h-6 w-6 text-primary" />
           </motion.div>
-          <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <span className={brandTextClass}>
             BELCIT TRADING
           </span>
           <Sparkles className="h-4 w-4 text-yellow-500 ml-auto" />
@@ -143,7 +149,11 @@ export function DashboardSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive(item.path)}
-                        className="transition-all duration-200 hover:bg-primary/10 data-[active=true]:bg-gradient-to-r data-[active=true]:from-purple-600 data-[active=true]:to-blue-600 data-[active=true]:text-white"
+                        className={`transition-all duration-200 hover:bg-primary/10 ${
+                          isPOSDevice 
+                            ? "data-[active=true]:bg-blue-600 data-[active=true]:text-white" 
+                            : "data-[active=true]:bg-gradient-to-r data-[active=true]:from-purple-600 data-[active=true]:to-blue-600 data-[active=true]:text-white"
+                        }`}
                       >
                         <Link href={item.path}>
                           <item.icon className="h-4 w-4" />
@@ -172,7 +182,7 @@ export function DashboardSidebar() {
             >
               <Avatar className="border-2 border-primary/20">
                 <AvatarImage src={user?.picture || "/placeholder.svg?height=32&width=32"} alt="User" />
-                <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold">
+                <AvatarFallback className={`${getGradientBgClass(isPOSDevice)} text-white font-bold`}>
                   {user ? (user.firstName?.[0] || "") + (user.lastName?.[0] || "") : "?"}
                 </AvatarFallback>
               </Avatar>
