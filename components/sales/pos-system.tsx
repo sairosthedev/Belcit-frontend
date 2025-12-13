@@ -617,18 +617,6 @@ export function POSSystem() {
                   </span>
                 </Button>
               </div>
-              {successMsg && lastSaleId && (
-                <div>
-                  <Button
-                    variant="outline"
-                    className="w-full border-2 hover:bg-primary/10 hover:border-primary transition-all"
-                    onClick={() => printReceipt(lastSaleId)}
-                  >
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Receipt
-                  </Button>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

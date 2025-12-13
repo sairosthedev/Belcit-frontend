@@ -44,7 +44,6 @@ export const SalesHeader = forwardRef<HTMLInputElement, { onSearch?: (query: str
               }}
             />
           </div>
-          <Button variant="outline">View Sales History</Button>
         </div>
       </div>
     )
