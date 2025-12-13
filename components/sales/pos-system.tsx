@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { printReceipt as sunmiPrintReceipt } from "@/lib/sunmi-printer";
+import "@/lib/sunmi-printer-debug"; // Load debug utility
 
 type CartItem = {
   id: number;

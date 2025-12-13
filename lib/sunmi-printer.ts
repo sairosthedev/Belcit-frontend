@@ -8,6 +8,9 @@ declare global {
     wwise?: any; // Sunmi WebView SDK
     sunmi?: any; // Alternative Sunmi SDK
     Android?: any; // Android bridge
+    wm_print?: any; // Sunmi WebView print method
+    SunmiPrinter?: any; // Sunmi Printer SDK
+    Printer?: any; // Generic printer interface
   }
 }
 
@@ -48,14 +51,30 @@ export class SunmiPrinter {
   private checkPrinterAvailability(): void {
     if (typeof window === 'undefined') return;
     
-    // Check for Sunmi WebView SDK
-    if (window.wwise || window.sunmi || window.Android) {
+    // Check for various Sunmi SDKs and print methods
+    const availableSDKs = [];
+    if (window.wwise) availableSDKs.push('wwise');
+    if (window.sunmi) availableSDKs.push('sunmi');
+    if (window.Android) availableSDKs.push('Android');
+    if (window.wm_print) availableSDKs.push('wm_print');
+    if (window.SunmiPrinter) availableSDKs.push('SunmiPrinter');
+    if (window.Printer) availableSDKs.push('Printer');
+    
+    console.log('Sunmi Printer SDKs detected:', availableSDKs);
+    console.log('User Agent:', navigator.userAgent);
+    
+    if (availableSDKs.length > 0) {
       this.printerAvailable = true;
     }
   }
 
   public isAvailable(): boolean {
-    return this.isSunmiDevice && this.printerAvailable;
+    const available = this.isSunmiDevice && this.printerAvailable;
+    console.log('Sunmi Printer Available:', available, {
+      isSunmiDevice: this.isSunmiDevice,
+      printerAvailable: this.printerAvailable
+    });
+    return available;
   }
 
   /**
@@ -76,23 +95,51 @@ export class SunmiPrinter {
         lineSpacing = 0
       } = options;
 
+      console.log('Attempting to print with Sunmi printer:', text.substring(0, 50) + '...');
+      
+      // Try Sunmi WebView print method (most common)
+      if (window.wm_print) {
+        console.log('Using wm_print method');
+        await this.printWithWmPrint(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+
       // Try Sunmi WebView SDK (wwise)
       if (window.wwise) {
+        console.log('Using wwise method');
         await this.printWithWwise(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+
+      // Try Sunmi Printer SDK
+      if (window.SunmiPrinter) {
+        console.log('Using SunmiPrinter SDK');
+        await this.printWithSunmiPrinterSDK(text, { fontSize, align, bold, underline, lineSpacing });
         return true;
       }
 
       // Try Sunmi SDK
       if (window.sunmi) {
+        console.log('Using sunmi SDK');
         await this.printWithSunmiSDK(text, { fontSize, align, bold, underline, lineSpacing });
         return true;
       }
 
       // Try Android bridge
       if (window.Android) {
+        console.log('Using Android bridge');
         await this.printWithAndroidBridge(text, { fontSize, align, bold, underline, lineSpacing });
         return true;
       }
+
+      // Try generic Printer interface
+      if (window.Printer) {
+        console.log('Using Printer interface');
+        await this.printWithPrinterInterface(text, { fontSize, align, bold, underline, lineSpacing });
+        return true;
+      }
+      
+      console.warn('No Sunmi printer SDK found');
 
       return false;
     } catch (error) {
@@ -161,80 +208,168 @@ export class SunmiPrinter {
   }
 
   private async printFormattedReceipt(text: string): Promise<boolean> {
-    const lines = text.split('\n');
-    
-    for (const line of lines) {
-      if (line.trim().length === 0) {
-        await this.printText('', { lineSpacing: 1 });
-        continue;
-      }
-
-      // Detect header lines (usually all caps or contain specific keywords)
-      const isHeader = line === line.toUpperCase() || 
-                      line.includes('RECEIPT') || 
-                      line.includes('INVOICE') ||
-                      line.includes('BELCIT');
-
-      if (isHeader) {
-        await this.printText(line, { fontSize: 28, align: 'center', bold: true });
-      } else if (line.includes('Total') || line.includes('TOTAL')) {
-        await this.printText(line, { fontSize: 26, align: 'right', bold: true });
-      } else if (line.includes('|')) {
-        // Table row
-        await this.printText(line, { fontSize: 22, align: 'left' });
-      } else {
-        await this.printText(line, { fontSize: 24, align: 'left' });
+    try {
+      // For Sunmi printers, we'll print the entire receipt as one block
+      // This is more reliable than line-by-line printing
+      console.log('Printing formatted receipt, length:', text.length);
+      
+      // Clean up the text - remove extra whitespace
+      const cleanedText = text
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
+      
+      // Print the entire receipt
+      const success = await this.printText(cleanedText, { 
+        fontSize: 24, 
+        align: 'left' 
+      });
+      
+      if (success) {
+        // Add some blank lines at the end
+        await this.printText('\n\n\n', { lineSpacing: 3 });
+        return true;
       }
       
-      await this.printText('', { lineSpacing: 1 });
+      return false;
+    } catch (error) {
+      console.error('Error printing formatted receipt:', error);
+      return false;
     }
+  }
 
-    // Add footer spacing
-    await this.printText('', { lineSpacing: 3 });
-    await this.printText('Thank you for your business!', { fontSize: 22, align: 'center' });
-    await this.printText('', { lineSpacing: 5 });
-
-    return true;
+  private async printWithWmPrint(text: string, options: PrintOptions): Promise<void> {
+    if (!window.wm_print) return;
+    
+    try {
+      // Sunmi WebView print method - most common API
+      if (typeof window.wm_print === 'function') {
+        window.wm_print(text);
+      } else if (window.wm_print.printText) {
+        window.wm_print.printText(text, options.fontSize || 24);
+      } else if (window.wm_print.print) {
+        window.wm_print.print({
+          text: text,
+          fontSize: options.fontSize || 24,
+          align: options.align || 'left'
+        });
+      }
+      console.log('Print command sent via wm_print');
+    } catch (error) {
+      console.error('wm_print error:', error);
+      throw error;
+    }
   }
 
   private async printWithWwise(text: string, options: PrintOptions): Promise<void> {
     if (!window.wwise) return;
     
-    // Sunmi WebView SDK format
-    const command = {
-      action: 'print',
-      text: text,
-      fontSize: options.fontSize,
-      align: options.align,
-      bold: options.bold,
-      underline: options.underline
-    };
+    try {
+      // Sunmi WebView SDK format
+      if (window.wwise.printText) {
+        window.wwise.printText(text, options.fontSize || 24);
+      } else if (window.wwise.postMessage) {
+        const command = {
+          action: 'print',
+          text: text,
+          fontSize: options.fontSize,
+          align: options.align,
+          bold: options.bold,
+          underline: options.underline
+        };
+        window.wwise.postMessage(JSON.stringify(command));
+      } else if (window.wwise.print) {
+        window.wwise.print(text);
+      }
+      console.log('Print command sent via wwise');
+    } catch (error) {
+      console.error('wwise print error:', error);
+      throw error;
+    }
+  }
 
-    window.wwise.postMessage(JSON.stringify(command));
+  private async printWithSunmiPrinterSDK(text: string, options: PrintOptions): Promise<void> {
+    if (!window.SunmiPrinter) return;
+    
+    try {
+      // Sunmi Printer SDK format
+      if (window.SunmiPrinter.printText) {
+        window.SunmiPrinter.printText(text);
+      } else if (window.SunmiPrinter.print) {
+        window.SunmiPrinter.print(text);
+      } else if (typeof window.SunmiPrinter === 'function') {
+        window.SunmiPrinter(text);
+      }
+      console.log('Print command sent via SunmiPrinter SDK');
+    } catch (error) {
+      console.error('SunmiPrinter SDK error:', error);
+      throw error;
+    }
   }
 
   private async printWithSunmiSDK(text: string, options: PrintOptions): Promise<void> {
     if (!window.sunmi) return;
     
-    // Sunmi SDK format
-    window.sunmi.print({
-      text: text,
-      fontSize: options.fontSize,
-      align: options.align,
-      bold: options.bold
-    });
+    try {
+      // Sunmi SDK format - try multiple methods
+      if (window.sunmi.printText) {
+        window.sunmi.printText(text, options.fontSize || 24);
+      } else if (window.sunmi.print) {
+        window.sunmi.print({
+          text: text,
+          fontSize: options.fontSize,
+          align: options.align,
+          bold: options.bold
+        });
+      } else if (typeof window.sunmi === 'function') {
+        window.sunmi(text);
+      }
+      console.log('Print command sent via sunmi SDK');
+    } catch (error) {
+      console.error('sunmi SDK error:', error);
+      throw error;
+    }
+  }
+
+  private async printWithPrinterInterface(text: string, options: PrintOptions): Promise<void> {
+    if (!window.Printer) return;
+    
+    try {
+      if (window.Printer.printText) {
+        window.Printer.printText(text);
+      } else if (window.Printer.print) {
+        window.Printer.print(text);
+      }
+      console.log('Print command sent via Printer interface');
+    } catch (error) {
+      console.error('Printer interface error:', error);
+      throw error;
+    }
   }
 
   private async printWithAndroidBridge(text: string, options: PrintOptions): Promise<void> {
     if (!window.Android) return;
     
-    // Android bridge format
-    window.Android.printText(
-      text,
-      options.fontSize || 24,
-      options.align || 'left',
-      options.bold || false
-    );
+    try {
+      // Android bridge format - try multiple methods
+      if (window.Android.printText) {
+        window.Android.printText(
+          text,
+          options.fontSize || 24,
+          options.align || 'left',
+          options.bold || false
+        );
+      } else if (window.Android.print) {
+        window.Android.print(text);
+      } else if (window.Android.call) {
+        window.Android.call('printText', text);
+      }
+      console.log('Print command sent via Android bridge');
+    } catch (error) {
+      console.error('Android bridge error:', error);
+      throw error;
+    }
   }
 
   /**
@@ -258,14 +393,32 @@ export class SunmiPrinter {
 export async function printReceipt(html: string): Promise<boolean> {
   const printer = SunmiPrinter.getInstance();
   
+  console.log('printReceipt called, HTML length:', html.length);
+  console.log('Printer available:', printer.isAvailable());
+  
+  // Always try Sunmi printing first if device is detected
   if (printer.isAvailable()) {
-    const success = await printer.printReceipt(html);
-    if (success) {
-      return true;
+    console.log('Attempting Sunmi native printing...');
+    try {
+      const success = await printer.printReceipt(html);
+      if (success) {
+        console.log('Sunmi printing successful');
+        return true;
+      } else {
+        console.warn('Sunmi printing returned false, falling back to browser print');
+      }
+    } catch (error) {
+      console.error('Sunmi printing error:', error);
     }
+  } else {
+    console.log('Sunmi printer not available, device detection:', {
+      isSunmiDevice: (printer as any).isSunmiDevice,
+      printerAvailable: (printer as any).printerAvailable
+    });
   }
   
   // Fallback to browser print
+  console.log('Falling back to browser print dialog');
   await printer.printWithBrowser(html);
   return false;
 }
