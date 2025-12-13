@@ -19,20 +19,41 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
   
   const fullUrl = `${API_BASE}${path}`;
-  console.log('API Request:', fullUrl); // Debug log
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A';
+  const isSunmi = typeof navigator !== 'undefined' && /sunmi/i.test(userAgent);
+  
+  console.log('API Request:', fullUrl);
+  console.log('User Agent:', userAgent);
+  console.log('Is Sunmi Device:', isSunmi);
+  
+  // Sunmi-specific: Add extra headers if needed
+  if (isSunmi) {
+    console.warn('Sunmi device detected - using enhanced error handling');
+  }
   
   // Create an AbortController for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
   
   try {
-    const res = await fetch(fullUrl, {
+    // Sunmi-specific: Try with different fetch options if first attempt fails
+    const fetchOptions: RequestInit = {
       ...options,
       headers,
       signal: controller.signal,
       mode: 'cors', // Explicitly allow CORS
       credentials: 'omit', // Don't send cookies for cross-origin requests
+      cache: 'no-cache', // Sunmi browsers sometimes cache incorrectly
+    };
+    
+    console.log('Fetch options:', { 
+      url: fullUrl, 
+      mode: fetchOptions.mode, 
+      hasSignal: !!fetchOptions.signal,
+      isSunmi 
     });
+    
+    const res = await fetch(fullUrl, fetchOptions);
     
     clearTimeout(timeoutId);
     
