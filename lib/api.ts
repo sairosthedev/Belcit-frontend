@@ -19,11 +19,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
   
   const fullUrl = `${API_BASE}${path}`;
-  console.log('API Request:', fullUrl); // Debug log
+  console.log('API Request:', fullUrl, 'User Agent:', typeof window !== 'undefined' ? navigator.userAgent : 'N/A'); // Debug log
   
-  // Create an AbortController for timeout
+  // Create an AbortController for timeout (reduced to 15 seconds for faster feedback)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
   
   try {
     const res = await fetch(fullUrl, {

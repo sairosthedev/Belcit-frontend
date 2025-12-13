@@ -20,12 +20,39 @@ export default function Home() {
   // Show loading while checking auth status
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-        <p className="text-sm text-muted-foreground">Connecting to server...</p>
-        <p className="text-xs text-muted-foreground">If this takes too long, check your internet connection</p>
+        <p className="text-sm text-muted-foreground text-center">Connecting to server...</p>
+        <p className="text-xs text-muted-foreground text-center max-w-md">
+          If this takes too long, check your internet connection
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Retry Connection
+        </button>
       </div>
     )
+  }
+  
+  // Show error if auth failed
+  const { authError } = useAuth() as any;
+  if (authError && !user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+        <div className="text-red-500 text-center max-w-md">
+          <p className="text-lg font-semibold mb-2">Connection Error</p>
+          <p className="text-sm">{authError}</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   // Redirect if already authenticated
