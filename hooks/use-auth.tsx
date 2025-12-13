@@ -47,17 +47,24 @@ export function AuthProvider({ children }) {
         })
         .catch((err) => {
           const duration = Date.now() - startTime;
-          console.error(`AuthProvider: API call failed after ${duration}ms:`, err);
           clearTimeout(maxTimeout);
           setUser(null);
-          if (err.message && err.message.toLowerCase().includes('unauthorized')) {
-            setAuthError('Session expired or not authorized. Please log in again.');
-          } else if (err.message && err.message.toLowerCase().includes('timeout')) {
-            setAuthError('Connection timeout. Please check your internet connection.');
-          } else if (err.message && err.message.toLowerCase().includes('network')) {
-            setAuthError('Network error. Please check your internet connection.');
+          
+          // Handle auth errors gracefully (401) - these are expected when not logged in
+          if ((err as any).isAuthError || res?.status === 401 || err.message?.toLowerCase().includes('authentication required')) {
+            console.log(`AuthProvider: Not authenticated (expected if not logged in)`);
+            setAuthError(null); // No error - just not logged in
           } else {
-            setAuthError(null);
+            console.error(`AuthProvider: API call failed after ${duration}ms:`, err);
+            if (err.message && err.message.toLowerCase().includes('unauthorized')) {
+              setAuthError('Session expired or not authorized. Please log in again.');
+            } else if (err.message && err.message.toLowerCase().includes('timeout')) {
+              setAuthError('Connection timeout. Please check your internet connection.');
+            } else if (err.message && err.message.toLowerCase().includes('network')) {
+              setAuthError('Network error. Please check your internet connection.');
+            } else {
+              setAuthError(null);
+            }
           }
         })
         .finally(() => {

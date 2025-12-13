@@ -8,6 +8,7 @@ import { MandatoryCheckinModal } from "@/components/attendance/mandatory-checkin
 import { MandatoryCheckoutModal } from "@/components/attendance/mandatory-checkout-modal"
 import { useAuth } from "@/hooks/use-auth"
 import { useTouch } from "@/contexts/touch-context"
+import { AppLoader } from "@/components/ui/app-loader"
 
 export default function DashboardLayout({
   children,
