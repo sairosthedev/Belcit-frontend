@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, ShoppingCart, Wallet, TrendingUp, Sparkles, Receipt, History, ArrowRight } from 'lucide-react';
+import { DollarSign, ShoppingCart, Wallet, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -305,18 +305,6 @@ const CashierDashboard = ({ user }: { user: User }) => {
       label: 'Go to Point of Sale',
       onClick: () => router.push('/dashboard/sales'),
       icon: ShoppingCart
-    },
-    {
-      label: 'View Sales History',
-      variant: 'outline' as const,
-      onClick: () => router.push("/dashboard/sales/history"),
-      icon: History
-    },
-    {
-      label: 'Print Last Receipt',
-      variant: 'outline' as const,
-      onClick: handlePrintLastReceipt,
-      icon: Receipt
     }
   ];
 

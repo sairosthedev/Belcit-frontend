@@ -28,40 +28,6 @@ export default function SalesHistoryPage() {
     if (user) fetchSales();
   }, [user]);
 
-  // Print receipt with authentication and Sunmi support
-  const printReceipt = async (saleId: string) => {
-    try {
-      // Normalize API base URL (remove trailing slash)
-      const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
-      const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
-      console.log('Fetching receipt from:', receiptUrl);
-      
-      const res = await fetch(receiptUrl, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'text/html',
-        },
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        toast.error('Failed to print receipt.');
-        return;
-      }
-      const html = await res.text();
-      
-      // Try Sunmi native printing first, fallback to browser print
-      const sunmiPrinted = await sunmiPrintReceipt(html);
-      
-      if (sunmiPrinted) {
-        toast.success("Receipt sent to Sunmi printer", { duration: 2000 });
-      } else {
-        toast.success("Receipt printed", { duration: 2000 });
-      }
-    } catch (err: any) {
-      console.error('Print error:', err);
-      toast.error(err.message || 'Failed to print receipt.', { duration: 2000 });
-    }
-  };
 
   return (
     <Card className="mt-6">
@@ -82,7 +48,6 @@ export default function SalesHistoryPage() {
                 <TableHead>Payment</TableHead>
                 <TableHead>Cashier</TableHead>
                 <TableHead>Items</TableHead>
-                <TableHead>Receipt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -93,9 +58,6 @@ export default function SalesHistoryPage() {
                   <TableCell>{sale.paymentType}</TableCell>
                   <TableCell>{sale.cashier?.first_name ? `${sale.cashier.first_name} ${sale.cashier.last_name || ""}` : sale.cashier?.name || "—"}</TableCell>
                   <TableCell>{sale.items?.map((item: any) => `${item.product?.name || item.productName || "?"} x${item.quantity}`).join(", ")}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="outline" onClick={() => printReceipt(sale._id || sale.id)}>Print</Button>
-                  </TableCell>
                 </TableRow>
               )) : null}
             </TableBody>

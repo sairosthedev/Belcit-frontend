@@ -5,10 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiFetch } from "@/lib/api"
-import { ShoppingBag, Printer } from "lucide-react"
+import { ShoppingBag } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { toast } from "sonner"
-import { printReceipt as sunmiPrintReceipt } from "@/lib/sunmi-printer"
 
 export function RecentSales() {
   const [sales, setSales] = useState<any[]>([])
@@ -173,18 +171,6 @@ export function RecentSales() {
                             {sale.items?.map((item: any) =>
                               `${item.product?.name || item.productName || "?"} x${item.quantity}`
                             ).join(", ")}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => printReceipt(sale._id)}
-                              disabled={!sale._id}
-                              className="border-2 hover:bg-primary/10"
-                            >
-                              <Printer className="h-3 w-3 mr-1" />
-                              Print
-                            </Button>
                           </TableCell>
                         </motion.tr>
                       ))
