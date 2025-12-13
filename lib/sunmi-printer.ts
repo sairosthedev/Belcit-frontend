@@ -101,9 +101,17 @@ export class SunmiPrinter {
    * Print text using Sunmi native printer
    */
   public async printText(text: string, options: PrintOptions = {}): Promise<boolean> {
-    if (!this.isAvailable()) {
-      console.warn('Sunmi printer not available, falling back to window.print()');
+    // On Sunmi devices, always try printing even if SDK not detected
+    const isSunmiDevice = this.isSunmiDevice;
+    const shouldTryPrinting = this.isAvailable() || isSunmiDevice;
+    
+    if (!shouldTryPrinting) {
+      console.warn('Sunmi printer not available and not a Sunmi device');
       return false;
+    }
+    
+    if (!this.isAvailable() && isSunmiDevice) {
+      console.warn('⚠️ Sunmi device detected but SDK not available - trying anyway');
     }
 
     try {
@@ -188,8 +196,19 @@ export class SunmiPrinter {
         return true;
       }
       
+      // If we're on a Sunmi device but no SDK found, throw error instead of returning false
+      // This prevents fallback to browser print
+      if (this.isSunmiDevice) {
+        console.error('❌ Sunmi device detected but no printer SDK found');
+        console.error('Available window methods:', Object.keys(window).filter(k => 
+          k.toLowerCase().includes('print') || 
+          k.toLowerCase().includes('sunmi') || 
+          k.toLowerCase().includes('wm')
+        ));
+        throw new Error('No printer SDK detected. Ensure you are using the native Android app, not browser.');
+      }
+      
       console.warn('No Sunmi printer SDK found');
-
       return false;
     } catch (error) {
       console.error('Sunmi print error:', error);
@@ -199,9 +218,16 @@ export class SunmiPrinter {
 
   /**
    * Print receipt HTML by converting to plain text format
+   * On Sunmi devices, always tries to print even if SDK not detected
    */
   public async printReceipt(html: string): Promise<boolean> {
-    if (!this.isAvailable()) {
+    // On Sunmi devices, always try printing even if SDK not detected
+    // SDK might be injected dynamically or available but not detected yet
+    const isSunmiDevice = this.isSunmiDevice;
+    const shouldTryPrinting = this.isAvailable() || isSunmiDevice;
+    
+    if (!shouldTryPrinting) {
+      console.warn('Printer not available and not a Sunmi device');
       return false;
     }
 
@@ -209,10 +235,29 @@ export class SunmiPrinter {
       // Convert HTML to plain text for thermal printer
       const text = this.htmlToReceiptText(html);
       
-      // Print with formatting
-      return await this.printFormattedReceipt(text);
+      console.log('Attempting to print receipt, text length:', text.length);
+      console.log('Is Sunmi device:', isSunmiDevice);
+      console.log('Printer available:', this.isAvailable());
+      
+      // Print with formatting - this will try all available methods
+      const success = await this.printFormattedReceipt(text);
+      
+      if (success) {
+        console.log('✅ Print command sent successfully');
+        return true;
+      } else if (isSunmiDevice) {
+        // On Sunmi, if no method worked, throw error instead of returning false
+        // This prevents fallback to browser print
+        throw new Error('No printer SDK detected. Please ensure you are using the native Android app.');
+      }
+      
+      return false;
     } catch (error) {
       console.error('Receipt print error:', error);
+      // On Sunmi devices, re-throw error to prevent browser print fallback
+      if (isSunmiDevice) {
+        throw error;
+      }
       return false;
     }
   }
@@ -565,6 +610,7 @@ export class SunmiPrinter {
 /**
  * Convenience function to print receipt
  * Automatically uses Sunmi printer if available, otherwise falls back to browser print
+ * NEVER opens browser window on Sunmi devices - prints directly or shows error
  */
 export async function printReceipt(html: string): Promise<boolean> {
   const printer = SunmiPrinter.getInstance();
@@ -572,27 +618,31 @@ export async function printReceipt(html: string): Promise<boolean> {
   console.log('printReceipt called, HTML length:', html.length);
   console.log('Printer available:', printer.isAvailable());
   
-  // Always try Sunmi printing first if device is detected
-  // Even if SDK not detected, try printing methods (SDK might be injected dynamically)
+  // Check if Sunmi device - be aggressive about detection
   const isSunmiDevice = (printer as any).isSunmiDevice;
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const isSunmiUA = /sunmi/i.test(userAgent) || /sunmi/i.test(navigator.vendor || '');
   
-  if (isSunmiDevice) {
-    console.log('Sunmi device detected - attempting native printing...');
+  // If it's a Sunmi device (detected by any means), NEVER use browser print
+  if (isSunmiDevice || isSunmiUA) {
+    console.log('✅ Sunmi device detected - attempting native printing ONLY (no browser popup)');
+    
     try {
+      // Try printing - this will attempt all available methods
       const success = await printer.printReceipt(html);
+      
       if (success) {
         console.log('✅ Sunmi printing successful - receipt sent to thermal printer');
         return true;
       } else {
-        console.warn('⚠️ Sunmi printing returned false');
-        // Don't fall back to browser print on Sunmi - user expects automatic printing
-        throw new Error('Sunmi printer not responding. Please check printer connection and try again.');
+        // Even if printReceipt returns false, we tried - don't open browser
+        console.warn('⚠️ Sunmi printing returned false - but we tried all methods');
+        throw new Error('Printer not responding. Check printer power, paper, and settings.');
       }
     } catch (error: any) {
       console.error('❌ Sunmi printing error:', error);
-      // On Sunmi device, don't show browser print dialog
-      // Instead, show error message
-      throw new Error(error.message || 'Failed to print to Sunmi thermal printer. Please check printer connection.');
+      // NEVER open browser window on Sunmi - just throw error
+      throw new Error(error.message || 'Failed to print to thermal printer. Check printer connection.');
     }
   } else {
     // Not a Sunmi device - use browser print

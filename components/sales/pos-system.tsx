@@ -234,17 +234,18 @@ export function POSSystem() {
 
       setSuccessMsg("Sale and payment completed successfully!");
       
-      // Auto-print receipt after successful sale (silent - no popup on Sunmi)
-      try {
-        await printReceipt(sale._id);
-        // Success message already shown by printReceipt
-      } catch (printErr: any) {
-        console.error('Auto-print failed:', printErr);
-        // On Sunmi, show error but don't fail the sale
+      // Auto-print receipt after successful sale (SILENT - no popup, no window opening)
+      // This will print directly to Sunmi thermal printer or show error
+      printReceipt(sale._id).then(() => {
+        console.log('✅ Receipt printed successfully');
+        toast.success("Receipt printed", { duration: 2000 });
+      }).catch((printErr: any) => {
+        console.error('❌ Auto-print failed:', printErr);
+        // Show error but don't fail the sale
         toast.error(printErr.message || 'Receipt printing failed, but sale was successful', { 
           duration: 3000 
         });
-      }
+      });
       
       setCartItems([]);
       setAmountReceived(0);
@@ -278,13 +279,14 @@ export function POSSystem() {
       if (!res.ok) throw new Error(await res.text());
       const html = await res.text();
       
-      // Try Sunmi native printing (no popup on Sunmi devices)
+      // Try Sunmi native printing (NO POPUP, NO WINDOW OPENING on Sunmi devices)
       const sunmiPrinted = await sunmiPrintReceipt(html);
       
       if (sunmiPrinted) {
         toast.success("Receipt sent to thermal printer", { duration: 2000 });
       } else {
-        // Only show browser print on non-Sunmi devices
+        // This should never happen on Sunmi - if it does, error was thrown
+        // Only non-Sunmi devices reach here
         toast.success("Opening print dialog...", { duration: 2000 });
       }
     } catch (err: any) {
