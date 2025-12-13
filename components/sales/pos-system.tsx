@@ -14,9 +14,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { usePOSDevice } from "@/hooks/use-pos-device";
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 import { printSunmiReceipt } from "../../src/capacitor-plugins/sunmi-printer";
 import "@/lib/sunmi-printer-debug"; // Load debug utility
 
@@ -136,56 +134,13 @@ export function POSSystem() {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const tax = subtotal * 0.07 // 7% tax
-  const total = subtotal + tax
+  const total = subtotal // No tax
 
   // Update change when amountReceived or total changes
   useEffect(() => {
     setChange(Math.max(0, amountReceived - total));
   }, [amountReceived, total]);
 
-  const triggerConfetti = () => {
-    const count = 200;
-    const defaults = {
-      origin: { y: 0.7 },
-      zIndex: 9999
-    };
-
-    function fire(particleRatio: number, opts: any) {
-      confetti({
-        ...defaults,
-        ...opts,
-        particleCount: Math.floor(count * particleRatio),
-      });
-    }
-
-    fire(0.25, {
-      spread: 26,
-      startVelocity: 55,
-    });
-
-    fire(0.2, {
-      spread: 60,
-    });
-
-    fire(0.35, {
-      spread: 100,
-      decay: 0.91,
-      scalar: 0.8,
-    });
-
-    fire(0.1, {
-      spread: 120,
-      startVelocity: 25,
-      decay: 0.92,
-      scalar: 1.2,
-    });
-
-    fire(0.1, {
-      spread: 120,
-      startVelocity: 45,
-    });
-  };
 
   const handleCompleteSale = async () => {
     setSubmitting(true);
@@ -226,7 +181,6 @@ export function POSSystem() {
       }
 
       // Success! Trigger celebration
-      triggerConfetti();
       toast.success("🎉 Sale completed successfully!", {
         duration: 3000,
         description: `Total: $${total.toFixed(2)}`
@@ -320,11 +274,7 @@ export function POSSystem() {
       {/* Left/Main Column: Product Scanner, Quick Add, and Cart Table */}
       <div className={`lg:col-span-2 flex flex-col ${isSmallScreen ? 'gap-3' : 'gap-4 md:gap-6'} w-full max-w-full overflow-x-hidden`}>
         {/* Responsive header: stack on mobile, row on desktop */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-4 mb-4"
-        >
+        <div className="flex flex-col gap-4 mb-4">
           {/* Cashier display on top for mobile */}
           {user && (
             <div className="text-right text-base font-medium">
@@ -337,15 +287,10 @@ export function POSSystem() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <SalesHeader onSearch={handleSearch} ref={searchInputRef} />
           </div>
-        </motion.div>
+        </div>
 
         {/* Customer select */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex flex-col sm:flex-row items-center gap-2 mb-4"
-        >
+        <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
           <label className="font-semibold text-sm">Customer:</label>
           <Select
             value={selectedCustomer ? selectedCustomer._id : 'walk-in'}
@@ -372,22 +317,14 @@ export function POSSystem() {
             </SelectContent>
           </Select>
           {selectedCustomer && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="ml-2 text-sm text-muted-foreground px-3 py-1 bg-primary/10 rounded-full"
-            >
+            <span className="ml-2 text-sm text-muted-foreground px-3 py-1 bg-primary/10 rounded-full">
               ✓ {selectedCustomer.firstName} {selectedCustomer.lastName}
-            </motion.span>
+            </span>
           )}
-        </motion.div>
+        </div>
 
         {/* Quick Add Products - dynamic with premium styling */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div>
           <Card className="border-2 hover:border-primary/30 transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-br from-background via-background to-primary/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -406,13 +343,8 @@ export function POSSystem() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {topProducts && topProducts.length > 0 ? (
                     topProducts.map((product: any, index: number) => (
-                      <motion.div
+                      <div
                         key={product.productId}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05, y: -5 }}
-                        whileTap={{ scale: 0.95 }}
                       >
                         <Button
                           variant="outline"
@@ -428,7 +360,7 @@ export function POSSystem() {
                             ${product.price?.toFixed(2) ?? '-'}
                           </span>
                         </Button>
-                      </motion.div>
+                      </div>
                     ))
                   ) : (
                     <div key="no-top-products" className="col-span-full text-muted-foreground text-center py-8">
@@ -439,28 +371,19 @@ export function POSSystem() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Cart Table: premium styling with animations */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="overflow-x-auto rounded-xl border-2 bg-gradient-to-br from-background via-background to-primary/5 shadow-xl mb-6 backdrop-blur-sm"
-        >
+        <div className="overflow-x-auto rounded-xl border-2 bg-gradient-to-br from-background via-background to-primary/5 shadow-xl mb-6 backdrop-blur-sm">
           <Card className="min-w-[900px] border-none shadow-none bg-transparent">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Current Cart
                 {cartItems.length > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded-full text-xs font-bold"
-                  >
+                  <span className="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded-full text-xs font-bold">
                     {cartItems.length}
-                  </motion.span>
+                  </span>
                 )}
               </CardTitle>
               <CardDescription>Items in the current transaction</CardDescription>
@@ -508,16 +431,11 @@ export function POSSystem() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <AnimatePresence mode="popLayout">
-                    {cartItems.map((item, index) => (
-                      <motion.tr
-                        key={item.id ?? item.barcode ?? item.name}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border-b hover:bg-primary/5 transition-colors"
-                      >
+                  {cartItems.map((item, index) => (
+                    <tr
+                      key={item.id ?? item.barcode ?? item.name}
+                      className="border-b hover:bg-primary/5 transition-colors"
+                    >
                         <TableCell className="font-semibold">{item.name}</TableCell>
                         <TableCell className="text-muted-foreground">{item.barcode || '-'}</TableCell>
                         <TableCell>
@@ -545,14 +463,12 @@ export function POSSystem() {
                             >
                               <Minus className={isPOSDevice || isTouchDevice ? "h-4 w-4" : "h-3 w-3"} />
                             </Button>
-                            <motion.span
+                            <span
                               key={item.quantity}
-                              initial={{ scale: 1.3 }}
-                              animate={{ scale: 1 }}
                               className={`${isPOSDevice || isTouchDevice ? 'w-16 text-lg' : 'w-12'} text-center font-bold`}
                             >
                               {item.quantity}
-                            </motion.span>
+                            </span>
                             <Button
                               variant="outline"
                               size={iconButtonSize}
@@ -576,20 +492,16 @@ export function POSSystem() {
                             <Trash2 className={isPOSDevice || isTouchDevice ? "h-5 w-5" : "h-4 w-4"} />
                           </Button>
                         </TableCell>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
+                    </tr>
+                  ))}
                   {cartItems.length === 0 && (
                     <TableRow key="empty">
                       <TableCell colSpan={8} className="text-center py-12">
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                        >
+                        <div>
                           <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-3" />
                           <p className="text-lg font-semibold text-muted-foreground">No items in cart</p>
                           <p className="text-sm text-muted-foreground mt-1">Scan a barcode or search for products to add</p>
-                        </motion.div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -597,35 +509,21 @@ export function POSSystem() {
               </Table>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
         {searchError && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm font-medium"
-          >
+          <div className="text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm font-medium">
             {searchError}
-          </motion.div>
+          </div>
         )}
         {successMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-green-600 bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm font-medium"
-          >
+          <div className="text-green-600 bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm font-medium">
             ✓ {successMsg}
-          </motion.div>
+          </div>
         )}
       </div>
 
       {/* Right/Sidebar: Order Summary with premium styling */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        className={`flex flex-col ${isSmallScreen ? 'gap-3' : 'gap-4 md:gap-6'} w-full max-w-full overflow-x-hidden`}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-        className="lg:col-span-1 flex flex-col gap-6"
-      >
+      <div className="lg:col-span-1 flex flex-col gap-6">
         {/* Order Summary/Checkout */}
         <Card className="border-2 hover:border-primary/30 transition-all duration-300 shadow-xl sticky top-4 bg-gradient-to-br from-background via-background to-primary/10 backdrop-blur-sm">
           <CardHeader>
@@ -642,24 +540,18 @@ export function POSSystem() {
                 <span className="font-medium">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tax (7%)</span>
-                <span className="font-medium">${tax.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Discount</span>
                 <span className="font-medium">$0.00</span>
               </div>
               <Separator className="bg-gradient-to-r from-transparent via-primary to-transparent h-[2px]" />
-              <motion.div
-                className="flex items-center justify-between font-bold text-xl p-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-lg border-2 border-primary/20"
-                animate={{ scale: cartItems.length > 0 ? [1, 1.02, 1] : 1 }}
-                transition={{ duration: 0.3 }}
-              >
+              <div className="flex items-center justify-between font-bold text-xl p-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-lg border-2 border-primary/20">
                 <span>Total</span>
                 <span className="text-2xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   ${total.toFixed(2)}
                 </span>
-              </motion.div>
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold">Payment Method</label>
                 <Select value={paymentMethod} onValueChange={val => { setPaymentMethod(val); if (val !== 'ecocash') setEcocashNumber(""); }}>
@@ -675,26 +567,19 @@ export function POSSystem() {
                   </SelectContent>
                 </Select>
               </div>
-              <AnimatePresence>
-                {paymentMethod === "ecocash" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-2"
-                  >
-                    <label className="text-sm font-semibold">Ecocash Number</label>
-                    <Input
-                      type="tel"
-                      value={ecocashNumber}
-                      onChange={e => setEcocashNumber(e.target.value)}
-                      className="w-full border-2 focus:border-primary"
-                      placeholder="Enter Ecocash number"
-                      required
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {paymentMethod === "ecocash" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Ecocash Number</label>
+                  <Input
+                    type="tel"
+                    value={ecocashNumber}
+                    onChange={e => setEcocashNumber(e.target.value)}
+                    className="w-full border-2 focus:border-primary"
+                    placeholder="Enter Ecocash number"
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-semibold">Amount Received</label>
                 <Input
@@ -710,10 +595,7 @@ export function POSSystem() {
                 <span className="text-sm font-medium">Change</span>
                 <span className="font-bold text-lg text-green-600">${change.toFixed(2)}</span>
               </div>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <div>
                 <Button
                   className={`w-full mt-2 ${isPOSDevice || isTouchDevice ? 'h-14 text-lg' : 'h-12 text-base'} font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group touch-manipulation`}
                   onClick={handleCompleteSale}
@@ -723,11 +605,7 @@ export function POSSystem() {
                   <span className="relative z-10 flex items-center gap-2">
                     {submitting ? (
                       <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
-                        />
+                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Processing...
                       </>
                     ) : (
@@ -738,29 +616,23 @@ export function POSSystem() {
                     )}
                   </span>
                 </Button>
-              </motion.div>
-              <AnimatePresence>
-                {successMsg && lastSaleId && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
+              </div>
+              {successMsg && lastSaleId && (
+                <div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-2 hover:bg-primary/10 hover:border-primary transition-all"
+                    onClick={() => printReceipt(lastSaleId)}
                   >
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 hover:bg-primary/10 hover:border-primary transition-all"
-                      onClick={() => printReceipt(lastSaleId)}
-                    >
-                      <Printer className="mr-2 h-4 w-4" />
-                      Print Receipt
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Receipt
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   )
 }
