@@ -14,14 +14,6 @@ export const metadata: Metadata = {
   description:
     "Its more than a market....",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: "cover",
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -31,6 +23,15 @@ export const metadata: Metadata = {
     icon: "/BT.png",
     apple: "/BT.png",
   },
+}
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: "#2563eb",
 }
 
 export default function RootLayout({
