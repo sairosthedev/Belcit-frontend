@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, ShoppingCart, Wallet, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
+import { DollarSign, ShoppingCart, Wallet, TrendingUp, Sparkles, Receipt, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -282,23 +282,6 @@ const CashierDashboard = ({ user }: { user: User }) => {
     const start = (page - 1) * PAGE_SIZE;
     return filteredSales.slice(start, start + PAGE_SIZE);
   }, [filteredSales, page]);
-
-  const handlePrintLastReceipt = async () => {
-    try {
-      const userId = user?.id || user?._id || "";
-      const sales = await apiFetch(`/api/sales?cashierId=${userId}&limit=1`);
-      if (sales && sales.length > 0) {
-        const lastSale = sales[0];
-        const receiptId = lastSale._id || lastSale.id;
-        window.open(`/dashboard/sales/receipt/${receiptId}`, "_blank");
-        toast.success("Opening receipt...", { duration: 2000 });
-      } else {
-        toast.error("No sales found to print receipt", { duration: 2000 });
-      }
-    } catch (err) {
-      toast.error("Failed to fetch last sale", { duration: 2000 });
-    }
-  };
 
   const quickActions = [
     {

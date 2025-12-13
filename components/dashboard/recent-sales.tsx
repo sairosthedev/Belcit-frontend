@@ -40,46 +40,6 @@ export function RecentSales() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const printReceipt = async (saleId: string) => {
-    try {
-      // Normalize API base URL (remove trailing slash)
-      const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://belcit-backend.onrender.com").replace(/\/$/, '');
-      const receiptUrl = `${API_BASE}/api/sales/${saleId}/receipt`;
-      console.log('Fetching receipt from:', receiptUrl);
-      
-      const res = await fetch(receiptUrl, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'text/html',
-        },
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        if (res.status === 404) {
-          toast.error('Receipt not found', { duration: 2000 });
-        } else {
-          toast.error('Failed to print receipt', { duration: 2000 });
-        }
-        return;
-      }
-      const html = await res.text();
-      
-      // Try Sunmi native printing first, fallback to browser print
-      const sunmiPrinted = await sunmiPrintReceipt(html);
-      
-      if (sunmiPrinted) {
-        toast.success("Receipt sent to Sunmi printer", { duration: 2000 });
-      } else {
-        toast.success("Receipt printed", { duration: 2000 });
-      }
-      
-      fetchSales(page);
-    } catch (err: any) {
-      console.error('Print error:', err);
-      toast.error(err.message || 'Print error occurred', { duration: 2000 });
-    }
-  };
-
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   if (loading && sales.length === 0) {
