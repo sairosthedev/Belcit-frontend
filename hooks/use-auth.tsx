@@ -15,21 +15,43 @@ export function AuthProvider({ children }) {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
+    // Set a maximum timeout to prevent infinite loading
+    const maxTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth check timed out after 35 seconds');
+        setLoading(false);
+        setAuthError('Connection timeout. Please check your internet connection.');
+      }
+    }, 35000);
+
     apiFetch('/api/auth/me')
       .then(async (userData) => {
+        clearTimeout(maxTimeout);
         setUser(userData);
         // Check if user is already checked in today
-        await checkCurrentCheckinStatus(userData);
+        try {
+          await checkCurrentCheckinStatus(userData);
+        } catch (checkinError) {
+          console.error('Error checking check-in status:', checkinError);
+          // Don't block auth if check-in check fails
+        }
       })
       .catch((err) => {
+        clearTimeout(maxTimeout);
         setUser(null);
+        console.error('Auth error:', err);
         if (err.message && err.message.toLowerCase().includes('unauthorized')) {
           setAuthError('Session expired or not authorized. Please log in again.');
+        } else if (err.message && err.message.toLowerCase().includes('timeout')) {
+          setAuthError('Connection timeout. Please check your internet connection.');
         } else {
           setAuthError(null);
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(maxTimeout);
+        setLoading(false);
+      });
   }, []);
 
   const checkCurrentCheckinStatus = async (userData) => {

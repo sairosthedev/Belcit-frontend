@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { usePOSDevice } from "@/hooks/use-pos-device";
 
 interface TouchContextType {
   isPOSDevice: boolean;
@@ -16,27 +15,60 @@ interface TouchContextType {
 const TouchContext = createContext<TouchContextType | undefined>(undefined);
 
 export function TouchProvider({ children }: { children: React.ReactNode }) {
-  const { isPOSDevice, isTouchDevice, isSmallScreen } = usePOSDevice();
+  const [deviceInfo, setDeviceInfo] = useState<{isPOSDevice: boolean, isTouchDevice: boolean, isSmallScreen: boolean}>({
+    isPOSDevice: false,
+    isTouchDevice: false,
+    isSmallScreen: false,
+  });
+  
+  useEffect(() => {
+    // Check if running on Android (Sunmi devices run Android)
+    const userAgent = typeof window !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+    const isAndroid = /android/.test(userAgent);
+    
+    // Check for Sunmi device indicators
+    const isSunmi = /sunmi/i.test(userAgent) || 
+                    (typeof window !== 'undefined' && /sunmi/i.test(navigator.vendor)) ||
+                    (typeof window !== 'undefined' && window.navigator.userAgent.includes("Sunmi"));
+    
+    // Check for touch capability
+    const hasTouch = typeof window !== 'undefined' && (
+      'ontouchstart' in window || 
+      navigator.maxTouchPoints > 0 ||
+      (navigator as any).msMaxTouchPoints > 0
+    );
+    
+    // Check screen size (POS devices typically have smaller screens)
+    const width = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const height = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const isSmallScreen = width < 1024 && height < 800;
+    
+    setDeviceInfo({
+      isPOSDevice: isAndroid && (isSunmi || isSmallScreen),
+      isTouchDevice: hasTouch || false,
+      isSmallScreen,
+    });
+  }, []);
   
   // Determine optimal sizes based on device type
-  const buttonSize = isPOSDevice || isTouchDevice ? "lg" : "default";
-  const iconButtonSize = isPOSDevice || isTouchDevice ? "default" : "icon";
-  const touchPadding = isPOSDevice || isTouchDevice ? "p-2" : "p-1";
-  const minTouchSize = isPOSDevice || isTouchDevice ? "min-h-[44px] min-w-[44px]" : "";
+  const buttonSize = deviceInfo.isPOSDevice || deviceInfo.isTouchDevice ? "lg" : "default";
+  const iconButtonSize = deviceInfo.isPOSDevice || deviceInfo.isTouchDevice ? "default" : "icon";
+  const touchPadding = deviceInfo.isPOSDevice || deviceInfo.isTouchDevice ? "p-2" : "p-1";
+  const minTouchSize = deviceInfo.isPOSDevice || deviceInfo.isTouchDevice ? "min-h-[44px] min-w-[44px]" : "";
 
   return (
     <TouchContext.Provider
       value={{
-        isPOSDevice,
-        isTouchDevice,
-        isSmallScreen,
+        isPOSDevice: deviceInfo.isPOSDevice,
+        isTouchDevice: deviceInfo.isTouchDevice,
+        isSmallScreen: deviceInfo.isSmallScreen,
         buttonSize,
         iconButtonSize,
         touchPadding,
         minTouchSize,
       }}
     >
-      <div className={isPOSDevice || isTouchDevice ? "touch-device" : ""}>
+      <div className={deviceInfo.isPOSDevice || deviceInfo.isTouchDevice ? "touch-device" : ""}>
         {children}
       </div>
     </TouchContext.Provider>
